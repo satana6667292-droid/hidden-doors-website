@@ -359,6 +359,7 @@ Implementation status:
 - `/guide/hidden-door-care/` — implemented on staging 2026-09-28.
 - `/guide/hidden-door-mistakes/` — implemented on staging 2026-09-28.
 - `/guide/hidden-door-hardware/` — implemented on staging 2026-09-28.
+- `/guide/double-hidden-doors/` — implemented on staging 2026-09-28.
 - remaining guides — planned.
 
 Guides should answer real pre-purchase and installation questions and link into commercial pages.
