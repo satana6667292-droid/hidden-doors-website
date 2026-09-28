@@ -34,6 +34,7 @@ Implementation status:
 - `/interior-doors/` — implemented on staging 2026-09-28.
 - `/dealers/` — implemented on staging 2026-09-28.
 - `/production/` — implemented on staging 2026-09-28.
+- `/projects/` — implemented on staging 2026-09-28.
 - remaining P1 hubs — planned.
 
 ### 1. `/hidden-doors/`
