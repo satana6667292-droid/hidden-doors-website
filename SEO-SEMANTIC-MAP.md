@@ -346,6 +346,11 @@ Brand/local navigation intent. No need to force commercial keywords.
 
 ## P3 — Information / guide cluster
 
+Implementation status:
+- `/guide/` — implemented on staging 2026-09-28.
+- `/guide/how-to-choose-hidden-door/` — implemented on staging 2026-09-28.
+- remaining guides — planned.
+
 Guides should answer real pre-purchase and installation questions and link into commercial pages.
 
 ### Hidden-door selection
