@@ -75,34 +75,10 @@ jobs:
           test -s site/index.html
           echo "Mirrored files: $(find site -type f | wc -l)"
 
-      - name: Try to enable GitHub Pages for Actions
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set +e
-          STATUS=$(curl -sS -o /tmp/pages.json -w "%{http_code}" \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "X-GitHub-Api-Version: 2026-03-10" \
-            "https://api.github.com/repos/${{ github.repository }}/pages")
-
-          if [ "$STATUS" = "404" ]; then
-            STATUS=$(curl -sS -o /tmp/pages.json -w "%{http_code}" \
-              -X POST \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "X-GitHub-Api-Version: 2026-03-10" \
-              "https://api.github.com/repos/${{ github.repository }}/pages" \
-              -d '{"build_type":"workflow"}')
-          fi
-
-          echo "Pages API status: $STATUS"
-          cat /tmp/pages.json || true
-          exit 0
-
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
