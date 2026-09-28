@@ -32,6 +32,7 @@ The existing 36/42/59 pages remain product-system pages. They support the SEO la
 Implementation status:
 - `/hidden-doors/` — implemented on staging 2026-09-28.
 - `/interior-doors/` — implemented on staging 2026-09-28.
+- `/dealers/` — implemented on staging 2026-09-28.
 - remaining P1 hubs — planned.
 
 ### 1. `/hidden-doors/`
