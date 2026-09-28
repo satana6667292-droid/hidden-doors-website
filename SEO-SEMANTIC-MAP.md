@@ -38,6 +38,7 @@ Implementation status:
 - `/hidden-doors/under-paint/` — implemented on staging 2026-09-28.
 - `/hidden-doors/reverse/` — implemented on staging 2026-09-28.
 - `/hidden-doors/tall/` — implemented on staging 2026-09-28.
+- `/hidden-doors/aluminium-frame/` — implemented on staging 2026-09-28.
 - `/designers/` — implemented on staging 2026-09-28.
 - `/developers/` — implemented on staging 2026-09-28.
 - `/where-to-buy/` — implemented on staging 2026-09-28.
