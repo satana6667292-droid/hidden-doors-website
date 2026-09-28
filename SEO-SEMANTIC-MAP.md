@@ -460,8 +460,15 @@ Current catalogue collections (2026):
 - FLUTE — 3 approved models
 
 Implemented on staging 2026-09-28:
-- `/interior-doors/collections/` — collection browse hub
-- `/doors/36/modena/` — MODENA collection landing with MODENA 01–06
+- `/interior-doors/collections/` — collection browse hub with all 39 approved models
+- `/doors/36/modena/` — MODENA 01–06
+- `/doors/36/siena/` — SIENA 01–05
+- `/doors/36/lucca/` — LUCCA 01–05
+- `/doors/36/axis/` — AXIS 01–06
+- `/doors/36/vector/` — VECTOR 01–05
+- `/doors/36/rhythm/` — RHYTHM 01–05
+- `/doors/36/arc/` — ARC 01–04
+- `/doors/36/flute/` — FLUTE 01–03
 
 
 
