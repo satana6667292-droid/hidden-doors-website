@@ -163,7 +163,7 @@ Rules:
 
 Current baseline:
 - Homepage: Organization + WebSite.
-- Product pages: Product + BreadcrumbList.
+- Product/system pages: WebPage + BreadcrumbList. Add Product markup only when the page contains enough real commercial data (for example Offer/price or eligible review data) to satisfy current search-engine requirements.
 
 Only mark up information that is actually visible/true on the page.
 Do not add fake reviews, ratings, prices or availability.
@@ -179,7 +179,7 @@ Future page types:
 - Mobile-first responsive layout.
 - Clean URLs ending with `/` for sections/pages.
 - Self-canonical on production.
-- XML sitemap contains only canonical indexable URLs.
+- Production XML sitemap contains only canonical indexable URLs. The staging sitemap may be kept for prelaunch validation but is not submitted to search consoles.
 - robots.txt points to production sitemap.
 - No broken internal links.
 - Real 404 response for missing URLs.
