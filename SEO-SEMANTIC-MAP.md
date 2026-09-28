@@ -40,6 +40,7 @@ Implementation status:
 - `/hidden-doors/tall/` — implemented on staging 2026-09-28.
 - `/hidden-doors/aluminium-frame/` — implemented on staging 2026-09-28.
 - `/hidden-doors/glass-mirror/` — implemented on staging 2026-09-28.
+- `/hidden-doors/hpl-panels/` — implemented on staging 2026-09-28.
 - `/designers/` — implemented on staging 2026-09-28.
 - `/developers/` — implemented on staging 2026-09-28.
 - `/where-to-buy/` — implemented on staging 2026-09-28.
@@ -296,6 +297,26 @@ Commercial landing for glass/mirror as compatible 4 mm materials: system limits,
 
 ---
 
+### `/hidden-doors/hpl-panels/`
+
+**Primary cluster**
+- скрытые двери с HPL
+- скрытая дверь HPL
+- скрытые двери с декоративными панелями
+- дверь скрытого монтажа с панелями
+
+**Product routing**
+- 42 mm: HPL by agreement
+- 59 mm: compatible HPL/decorative panels as 4 mm materials after technical check
+
+**Content**
+Commercial landing for HPL and decorative-panel intent: system routing, dimensions, two-side combinations for 59 mm, material compatibility, opening, edge and CTA.
+
+**Cannibalization rule**
+/doors/42/ and /doors/59/ own technical system intent; /guide/hidden-door-finishes/ owns informational finish comparison; this page owns buy/order/calculate intent for HPL/decorative-panel hidden doors.
+
+---
+
 ### Finish/material sections — start as sections, not separate pages
 
 The following are useful search vocabulary but should NOT automatically become separate URLs:
@@ -527,6 +548,7 @@ Use naturally across relevant pages, not as a keyword list.
 | reverse hidden doors | /hidden-doors/reverse/ | /doors/42/, /doors/59/, guide |
 | tall hidden doors | /hidden-doors/tall/ | /doors/59/, /doors/42/, guide |
 | hidden doors with glass/mirror | /hidden-doors/glass-mirror/ | /doors/59/, finishes guide |
+| hidden doors with HPL/panels | /hidden-doors/hpl-panels/ | /doors/42/, /doors/59/, finishes guide |
 | generic interior doors | /interior-doors/ | /doors/36/, collections |
 | 36 mm system | /doors/36/ | /interior-doors/, collections |
 | 42 mm system | /doors/42/ | /hidden-doors/ |
