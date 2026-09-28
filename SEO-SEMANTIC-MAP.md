@@ -39,6 +39,7 @@ Implementation status:
 - `/hidden-doors/reverse/` — implemented on staging 2026-09-28.
 - `/hidden-doors/tall/` — implemented on staging 2026-09-28.
 - `/hidden-doors/aluminium-frame/` — implemented on staging 2026-09-28.
+- `/hidden-doors/glass-mirror/` — implemented on staging 2026-09-28.
 - `/designers/` — implemented on staging 2026-09-28.
 - `/developers/` — implemented on staging 2026-09-28.
 - `/where-to-buy/` — implemented on staging 2026-09-28.
@@ -276,6 +277,25 @@ Create only after checking that we have enough unique technical and visual conte
 
 ---
 
+### `/hidden-doors/glass-mirror/`
+
+**Primary cluster**
+- скрытые двери с зеркалом
+- скрытая дверь зеркало
+- скрытые двери со стеклом
+- дверь скрытого монтажа с зеркалом
+
+**Product owner**
+- system 59 mm only
+
+**Content**
+Commercial landing for glass/mirror as compatible 4 mm materials: system limits, two-side combinations, technical compatibility checks, opening and edge options, CTA.
+
+**Cannibalization rule**
+/doors/59/ owns the technical system; /guide/hidden-door-finishes/ owns informational finish comparison; this page owns buy/order/calculate intent for glass/mirror hidden doors.
+
+---
+
 ### Finish/material sections — start as sections, not separate pages
 
 The following are useful search vocabulary but should NOT automatically become separate URLs:
@@ -506,6 +526,7 @@ Use naturally across relevant pages, not as a keyword list.
 | hidden doors under paint | /hidden-doors/under-paint/ | /hidden-doors/, /doors/42/, /doors/59/ |
 | reverse hidden doors | /hidden-doors/reverse/ | /doors/42/, /doors/59/, guide |
 | tall hidden doors | /hidden-doors/tall/ | /doors/59/, /doors/42/, guide |
+| hidden doors with glass/mirror | /hidden-doors/glass-mirror/ | /doors/59/, finishes guide |
 | generic interior doors | /interior-doors/ | /doors/36/, collections |
 | 36 mm system | /doors/36/ | /interior-doors/, collections |
 | 42 mm system | /doors/42/ | /hidden-doors/ |
