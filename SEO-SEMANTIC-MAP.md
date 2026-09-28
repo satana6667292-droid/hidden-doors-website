@@ -37,6 +37,7 @@ Implementation status:
 - `/projects/` — implemented on staging 2026-09-28.
 - `/hidden-doors/under-paint/` — implemented on staging 2026-09-28.
 - `/hidden-doors/reverse/` — implemented on staging 2026-09-28.
+- `/hidden-doors/tall/` — implemented on staging 2026-09-28.
 - remaining P1 hubs — planned.
 
 ### 1. `/hidden-doors/`
