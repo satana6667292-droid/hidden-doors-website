@@ -449,6 +449,22 @@ Important: if a guide and a commercial landing cover the same topic, the guide a
 
 ## P3 — 36 mm collection/model architecture
 
+Current catalogue collections (2026):
+- MODENA — 6 approved models
+- SIENA — 5 approved models
+- LUCCA — 5 approved models
+- AXIS — 6 approved models in the current catalogue set
+- VECTOR — 5 approved models
+- RHYTHM — 5 approved models
+- ARC — 4 approved models
+- FLUTE — 3 approved models
+
+Implemented on staging 2026-09-28:
+- `/interior-doors/collections/` — collection browse hub
+- `/doors/36/modena/` — MODENA collection landing with MODENA 01–06
+
+
+
 Model/collection pages can become indexable when the catalogue is ready.
 
 Pattern:
@@ -551,6 +567,7 @@ Use naturally across relevant pages, not as a keyword list.
 | hidden doors with HPL/panels | /hidden-doors/hpl-panels/ | /doors/42/, /doors/59/, finishes guide |
 | generic interior doors | /interior-doors/ | /doors/36/, collections |
 | 36 mm system | /doors/36/ | /interior-doors/, collections |
+| 36 mm collections browse | /interior-doors/collections/ | /interior-doors/, /doors/36/, collection pages |
 | 42 mm system | /doors/42/ | /hidden-doors/ |
 | 59 mm system | /doors/59/ | /hidden-doors/, /hidden-doors/tall/ |
 | wholesale/dealers | /dealers/ | homepage, system pages |
