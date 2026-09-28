@@ -361,7 +361,8 @@ Implementation status:
 - `/guide/hidden-door-hardware/` — implemented on staging 2026-09-28.
 - `/guide/double-hidden-doors/` — implemented on staging 2026-09-28.
 - `/guide/sliding-hidden-doors/` — implemented on staging 2026-09-28.
-- remaining guides — planned.
+- `/guide/hidden-door-finishes/` — implemented on staging 2026-09-28.
+- initial informational guide cluster complete: 14 published guides; add new guides only from validated search demand.
 
 Guides should answer real pre-purchase and installation questions and link into commercial pages.
 
