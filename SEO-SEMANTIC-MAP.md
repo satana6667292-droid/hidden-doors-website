@@ -29,6 +29,10 @@ The existing 36/42/59 pages remain product-system pages. They support the SEO la
 
 ## P1 — High-intent commercial hubs to create next
 
+Implementation status:
+- `/hidden-doors/` — implemented on staging 2026-09-28.
+- remaining P1 hubs — planned.
+
 ### 1. `/hidden-doors/`
 
 **Role:** main commercial landing page for concealed/hidden doors.
