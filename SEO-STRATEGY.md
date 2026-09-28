@@ -1,5 +1,7 @@
 # Hidden Doors — SEO standard
 
+Semantic ownership of queries and planned URLs is defined in `SEO-SEMANTIC-MAP.md`. Check that map before creating or materially rewriting any indexable page.
+
 ## Status
 
 Current GitHub Pages URL is a staging/test environment:
