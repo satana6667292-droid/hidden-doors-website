@@ -88,3 +88,26 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+
+      - name: Verify published form and Yandex Metrika
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          base="${PAGE_URL%/}"
+          html="$(curl --fail --silent --show-error --max-time 20 "$base/")"
+          app="$(curl --fail --silent --show-error --max-time 20 "$base/app.js?v=20260929-leads1")"
+
+          echo "$app" | grep -Fq "const METRIKA_ID=95250042;"
+          echo "$app" | grep -Fq "ym(METRIKA_ID,'init'"
+          echo "$app" | grep -Fq "metricGoal('lead_success'"
+          echo "$app" | grep -Fq "subscriberDigits.length!==10"
+          echo "$app" | grep -Fq "name.required=true"
+          echo "$app" | grep -Fq "city.required=false"
+
+          curl --fail --silent --show-error --max-time 20             "https://mc.yandex.ru/metrika/tag.js?id=95250042"             -o /tmp/yandex-metrika-tag.js
+          test -s /tmp/yandex-metrika-tag.js
+
+          echo "Published form + Yandex Metrika verification passed"
