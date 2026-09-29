@@ -55,6 +55,57 @@ jobs:
           touch site/.nojekyll
           test -s site/index.html
 
+      - name: Apply prelaunch legal cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root=Path('site')
+          for p in root.rglob('*.html'):
+              if p.as_posix() in {'site/privacy/index.html','site/consent/index.html'}:
+                  continue
+              s=p.read_text(encoding='utf-8')
+              rel=p.relative_to(root)
+              depth=len(rel.parts)-1
+              prefix='./' if depth==0 else '../'*depth
+
+              s=s.replace(
+                  '<button class="account" data-dialog="account">Кабинет дилера <span aria-hidden="true">↗</span></button>',
+                  '<a class="account" href="https://lk.hidden-doors.ru/" target="_blank" rel="noopener noreferrer">Кабинет дилера <span aria-hidden="true">↗</span></a>'
+              )
+              s=s.replace('<div class="prototype-note">Предпросмотр формы. Данные никуда не отправляются.</div>','')
+              s=s.replace(
+                  '<button class="button green" type="submit">Проверить заявку <span>↗</span></button>',
+                  '<button class="button green" type="submit">Отправить заявку <span>↗</span></button>'
+              )
+              s=re.sub(r'<dialog id="account-dialog"[\s\S]*?</dialog>','',s)
+              s=re.sub(r'app\.js\?v=[^"\'\s<]+','app.js?v=20260929-legal1',s)
+              s=re.sub(r'style\.css\?v=[^"\'\s<]+','style.css?v=20260929-legal1',s)
+              s=s.replace('<label>Ваше имя<input name="name"', '<label>Ваше имя *<input name="name"')
+              s=s.replace('<label>Телефон<input name="phone"', '<label>Телефон *<input name="phone"')
+              s=s.replace('<label>Город<input name="city" autocomplete="address-level2" required', '<label>Город<input name="city" autocomplete="address-level2"')
+              s=re.sub(
+                  r'<div class="wrap footer-bottom"><span>© 2026 Hidden Doors</span><span>[\s\S]*?</span><a href="#top">',
+                  f'<div class="wrap footer-bottom"><span>© 2026 Hidden Doors</span><span><a href="{prefix}privacy/">Политика ПД</a> · <a href="{prefix}consent/">Согласие на обработку ПД</a></span><a href="#top">',
+                  s
+              )
+              p.write_text(s,encoding='utf-8')
+
+          bad=[]
+          for p in root.rglob('*.html'):
+              if p.as_posix() in {'site/privacy/index.html','site/consent/index.html'}:
+                  continue
+              s=p.read_text(encoding='utf-8')
+              for token in ('формы без отправки','Предпросмотр формы. Данные никуда не отправляются.','id="account-dialog"','data-dialog="account"'):
+                  if token in s:
+                      bad.append(f'{p}: {token}')
+          if bad:
+              raise SystemExit('\n'.join(bad))
+          PY
+
       - name: Store mirrored website in the repository
         if: ${{ hashFiles('site/index.html') != '' }}
         shell: bash
