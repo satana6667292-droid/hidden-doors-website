@@ -30,6 +30,44 @@ function injectTelegramLinks(){
   }
 }
 injectTelegramLinks();
+function applyLaunchCleanup(){
+  document.querySelectorAll('.prototype-note').forEach(el=>el.remove());
+  const accountDialog=document.querySelector('#account-dialog');
+  if(accountDialog)accountDialog.remove();
+
+  document.querySelectorAll('.account[data-dialog="account"]').forEach(button=>{
+    const a=document.createElement('a');
+    a.className=button.className;
+    a.href='https://lk.hidden-doors.ru/';
+    a.target='_blank';
+    a.rel='noopener noreferrer';
+    a.innerHTML='Кабинет дилера <span aria-hidden="true">↗</span>';
+    button.replaceWith(a);
+  });
+
+  const defaultSubmit=document.querySelector('#request-form [type="submit"]');
+  if(defaultSubmit&&defaultSubmit.textContent.includes('Проверить заявку'))defaultSubmit.innerHTML='Отправить заявку <span aria-hidden="true">↗</span>';
+
+  const footerBottom=document.querySelector('.footer-bottom');
+  if(footerBottom&&!footerBottom.querySelector('.footer-legal')){
+    const legal=document.createElement('span');
+    legal.className='footer-legal';
+    const policy=document.createElement('a');
+    policy.href=new URL('privacy/',SITE_ROOT_URL).toString();
+    policy.textContent='Политика ПД';
+    const consent=document.createElement('a');
+    consent.href=new URL('consent/',SITE_ROOT_URL).toString();
+    consent.textContent='Согласие на обработку ПД';
+    legal.append(policy,' · ',consent);
+    const test=[...footerBottom.querySelectorAll('span')].find(el=>el.textContent.includes('формы без отправки')||el.textContent.includes('Версия 2'));
+    if(test)test.replaceWith(legal);
+    else{
+      const top=footerBottom.querySelector('a[href="#top"]');
+      if(top)footerBottom.insertBefore(legal,top);else footerBottom.append(legal);
+    }
+  }
+}
+applyLaunchCleanup();
 const $=s=>document.querySelector(s);const dialogs=[...document.querySelectorAll('dialog')];
 function openDialog(d){d.showModal();document.body.classList.add('modal-open')}
 function closeDialog(d){d.close();if(!dialogs.some(x=>x.open))document.body.classList.remove('modal-open')}
