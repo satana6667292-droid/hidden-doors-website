@@ -1,4 +1,5 @@
 const METRIKA_ID=95250042;
+const LEAD_API_URL='https://lk.hidden-doors.ru/api/site/lead';
 (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(let j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r)return}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id='+METRIKA_ID,'ym');
 ym(METRIKA_ID,'init',{ssr:true,webvisor:true,clickmap:true,accurateTrackBounce:true,trackLinks:true});
 function metricGoal(name,params={}){if(typeof window.ym==='function')window.ym(METRIKA_ID,'reachGoal',name,params)}
@@ -21,6 +22,8 @@ const normalizeKind=kind=>kind==='where'||kind==='dealer-search'?'dealerSearch':
 function labelOf(el){return el?.closest('label')}
 function setLabelText(el,text){const label=labelOf(el);if(!label)return;const node=[...label.childNodes].find(n=>n.nodeType===Node.TEXT_NODE);if(node)node.nodeValue=text}
 function ensureHidden(name){let input=form.elements[name];if(!input){input=document.createElement('input');input.type='hidden';input.name=name;form.append(input)}return input}
+function newRequestId(){if(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function')return globalThis.crypto.randomUUID();return 'hd-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12)}
+function ensureHoneypot(){let input=form.elements.website;if(input)return input;input=document.createElement('input');input.type='text';input.name='website';input.autocomplete='off';input.tabIndex=-1;input.setAttribute('aria-hidden','true');input.style.position='absolute';input.style.left='-10000px';input.style.width='1px';input.style.height='1px';input.style.opacity='0';form.append(input);return input}
 function ensureCompany(){let input=form.elements.company;if(input)return input;const label=document.createElement('label');label.id='company-label';label.textContent='Компания / салон';input=document.createElement('input');input.name='company';input.autocomplete='organization';input.placeholder='Название компании';input.maxLength=150;label.append(input);const construction=$('#construction-label');construction.parentNode.insertBefore(label,construction);return input}
 function ensureFile(){let input=form.elements.project_file;if(input)return input;const label=document.createElement('label');label.id='project-file-label';label.textContent='Файл проекта ';const small=document.createElement('small');small.textContent='(необязательно)';label.append(small);input=document.createElement('input');input.type='file';input.name='project_file';input.accept='.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp';label.append(input);const comment=form.elements.comment.closest('label');comment.parentNode.insertBefore(label,comment);return input}
 function tracking(kind,model){const q=new URLSearchParams(location.search);const values={page_url:location.href,page_title:document.title,form_type:kind,door_system:model||document.body.dataset.product||'',model:model||'',referrer:document.referrer,utm_source:q.get('utm_source')||'',utm_medium:q.get('utm_medium')||'',utm_campaign:q.get('utm_campaign')||'',utm_content:q.get('utm_content')||'',utm_term:q.get('utm_term')||''};Object.entries(values).forEach(([k,v])=>ensureHidden(k).value=v)}
@@ -42,6 +45,7 @@ if(kind==='dealerSearch'){setLabelText(construction,'Какая дверь ин�
 else if(kind==='developer')setLabelText(construction,'Система');
 else setLabelText(construction,'Конструкция');
 tracking(kind,chosen);
+ensureHidden('request_id').value=newRequestId();ensureHoneypot().value='';
 form.dataset.formType=kind;form.dataset.successLabel=cfg.success;
 window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'form_open',form_type:kind,door_system:chosen,page_path:location.pathname});metricGoal('form_open',{form_type:kind,door_system:chosen,page_path:location.pathname});if(kind==='stock')metricGoal('stock_open',{page_path:location.pathname});if(kind==='dealerSearch')metricGoal('dealer_search_open',{page_path:location.pathname});if(kind==='dealer')metricGoal('dealer_open',{page_path:location.pathname});
 openDialog(requestDialog)}
@@ -49,7 +53,24 @@ document.querySelectorAll('[data-dialog]').forEach(b=>b.onclick=()=>{if(b.datase
 const models={'36':{title:'36 мм — каркасно-щитовые',description:'Межкомнатная дверь с коробом и погонажем в едином оформлении.',features:['Полотно толщиной 36 мм','Подбор покрытия под интерьер','Комплектация коробом, наличниками и доборами']},'42':{title:'42 мм — скрытый монтаж',description:'Дверь для интерьеров, в которых важна чистота линий.',features:['Полотно толщиной 42 мм','Каркас из фанеры или алюминия — в зависимости от исполнения','Подбор покрытия, открывания и фурнитуры']},'59':{title:'59 мм — алюминиевый каркас',description:'Конструкция для высоких полотен и разных вариантов отделки.',features:['Полотно толщиной 59 мм','Алюминиевый каркас и алюминиевый торец','Покрытие и комплектацию подбираем под проект']}};
 let selected='42';document.querySelectorAll('[data-model]').forEach(b=>b.onclick=()=>{selected=b.dataset.model;const m=models[selected];$('#model-title').textContent=m.title;$('#model-description').textContent=m.description;$('#model-features').replaceChildren(...m.features.map(f=>{const li=document.createElement('li');li.textContent=f;return li}));openDialog($('#model-dialog'))});const modelRequest=$('#model-request');if(modelRequest)modelRequest.onclick=()=>{closeDialog($('#model-dialog'));request('calculate',selected)};const accountRequest=$('#account-request');if(accountRequest)accountRequest.onclick=()=>{closeDialog($('#account-dialog'));request('dealer')};
 document.querySelectorAll('a[href^="tel:"]').forEach(a=>a.addEventListener('click',()=>metricGoal('phone_click',{page_path:location.pathname,phone:a.getAttribute('href').replace('tel:','')})));document.querySelectorAll('[data-photo]').forEach(b=>b.onclick=()=>{const d=$('#photo-dialog');d.querySelector('img').src=b.dataset.photo;d.querySelector('img').alt=b.dataset.caption;d.querySelector('p').textContent=b.dataset.caption;openDialog(d)});
-form.onsubmit=e=>{e.preventDefault();const f=e.currentTarget,phone=f.elements.phone;if(phone.value.replace(/\D/g,'').length<10){phone.setCustomValidity('Укажите телефон с кодом города или оператора.');phone.reportValidity();return}phone.setCustomValidity('');const payload=Object.fromEntries(new FormData(f).entries());window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'lead_ready',form_type:f.dataset.formType,door_system:payload.door_system||'',page_path:location.pathname});$('.form-status').textContent='Форма готова. На следующем этапе подключим отправку заявки менеджеру и цель lead_success.'};form.elements.phone.oninput=e=>e.target.setCustomValidity('');
+form.onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,phone=f.elements.phone,submit=f.querySelector('[type="submit"]'),status=$('.form-status');if(phone.value.replace(/\D/g,'').length<10){phone.setCustomValidity('Укажите телефон с кодом города или оператора.');phone.reportValidity();return}phone.setCustomValidity('');
+const data=new FormData(f),file=f.elements.project_file?.files?.[0]||null,payload={};for(const [key,value] of data.entries()){if(value instanceof File)continue;payload[key]=value}if(file)payload.project_file_name=file.name;
+window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'lead_ready',form_type:f.dataset.formType,door_system:payload.door_system||'',page_path:location.pathname});
+const original=submit.innerHTML;submit.disabled=true;submit.textContent='Отправляем…';status.textContent='';
+try{
+  const response=await fetch(LEAD_API_URL,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});
+  let result={};try{result=await response.json()}catch{}
+  if(!response.ok||result.status!=='ready')throw new Error(result.error||('HTTP '+response.status));
+  metricGoal('lead_success',{form_type:f.dataset.formType,door_system:payload.door_system||'',lead_id:result.leadId||''});
+  window.dataLayer.push({event:'lead_success',form_type:f.dataset.formType,door_system:payload.door_system||'',lead_id:result.leadId||'',page_path:location.pathname});
+  status.textContent='Заявка отправлена. Менеджер Hidden Doors свяжется с вами.';
+  submit.innerHTML='Заявка отправлена <span aria-hidden="true">✓</span>';
+  submit.disabled=true;
+}catch(error){
+  console.error('Hidden Doors lead submit:',error);
+  status.textContent='Не удалось отправить заявку. Попробуйте ещё раз или позвоните: +7 932 022-11-22.';
+  submit.innerHTML=original;submit.disabled=false;
+}};form.elements.phone.oninput=e=>e.target.setCustomValidity('');
 const doorsToggle=$('.doors-toggle'),doorsMenu=$('#doors-submenu');
 if(doorsToggle&&doorsMenu){doorsToggle.onclick=()=>{const expanded=doorsToggle.getAttribute('aria-expanded')==='true';doorsToggle.setAttribute('aria-expanded',String(!expanded));doorsMenu.hidden=expanded};document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!doorsMenu.hidden){doorsMenu.hidden=true;doorsToggle.setAttribute('aria-expanded','false');doorsToggle.focus()}});document.addEventListener('click',e=>{if(!e.target.closest('.nav-doors')){doorsMenu.hidden=true;doorsToggle.setAttribute('aria-expanded','false')}})}
 const parallaxImage=$('[data-parallax="hero"]');
