@@ -11,9 +11,9 @@ const menu=$('.menu-button');if(menu)menu.onclick=()=>{const expanded=menu.getAt
 document.querySelectorAll('#navigation a').forEach(a=>a.onclick=()=>{if(menu){menu.setAttribute('aria-expanded','false');$('#navigation').classList.remove('open')}});
 const form=$('#request-form'),requestDialog=$('#request-dialog');
 const copy={
-calculate:{title:'Получите расчёт комплекта',description:'Оставьте телефон и город. Уточним размеры, отделку и комплектацию.',submit:'Получить расчёт',comment:'Размеры, покрытие, количество дверей',success:'Расчёт'},
-stock:{title:'Проверим двери в наличии',description:'Оставьте телефон и город. Менеджер проверит подходящие готовые позиции.',submit:'Проверить наличие',comment:'Размер, открывание, покрытие, количество',success:'Наличие'},
-dealerSearch:{title:'Найдём дилера Hidden Doors',description:'Укажите город и телефон — проверим актуального партнёра в вашем регионе.',submit:'Найти дилера',comment:'Какая дверь интересует, размеры или количество',success:'Поиск дилера'},
+calculate:{title:'Получите расчёт комплекта',description:'Оставьте имя и телефон. Размеры, город и детали можно указать дополнительно.',submit:'Получить расчёт',comment:'Размеры, покрытие, количество дверей',success:'Расчёт'},
+stock:{title:'Проверим двери в наличии',description:'Оставьте имя и телефон. Менеджер уточнит детали и проверит подходящие готовые позиции.',submit:'Проверить наличие',comment:'Размер, открывание, покрытие, количество',success:'Наличие'},
+dealerSearch:{title:'Найдём дилера Hidden Doors',description:'Оставьте имя и телефон. Город можно указать, чтобы быстрее подобрать партнёра.',submit:'Найти дилера',comment:'Какая дверь интересует, размеры или количество',success:'Поиск дилера'},
 dealer:{title:'Получите условия сотрудничества',description:'Расскажите о компании или салоне. Обсудим формат работы и дилерские условия.',submit:'Получить условия',comment:'Сайт, формат работы, интересующая продукция',success:'Дилерская заявка'},
 designer:{title:'Обсудим дизайн-проект',description:'Передайте параметры проекта — проверим систему, открывание и отделку до спецификации.',submit:'Обсудить проект',comment:'Размеры, открывание, отделка, количество дверей',success:'Проект дизайнера'},
 developer:{title:'Отправьте ТЗ на расчёт',description:'Передайте параметры объекта или ТЗ — проверим типоразмеры, системы и комплектацию.',submit:'Отправить ТЗ',comment:'Количество, типоразмеры, сроки, отделка, требования ТЗ',success:'Объектный расчёт'}
@@ -26,17 +26,39 @@ function newRequestId(){if(globalThis.crypto&&typeof globalThis.crypto.randomUUI
 function ensureHoneypot(){let input=form.elements.website;if(input)return input;input=document.createElement('input');input.type='text';input.name='website';input.autocomplete='off';input.tabIndex=-1;input.setAttribute('aria-hidden','true');input.style.position='absolute';input.style.left='-10000px';input.style.width='1px';input.style.height='1px';input.style.opacity='0';form.append(input);return input}
 function ensureCompany(){let input=form.elements.company;if(input)return input;const label=document.createElement('label');label.id='company-label';label.textContent='Компания / салон';input=document.createElement('input');input.name='company';input.autocomplete='organization';input.placeholder='Название компании';input.maxLength=150;label.append(input);const construction=$('#construction-label');construction.parentNode.insertBefore(label,construction);return input}
 function ensureFile(){let input=form.elements.project_file;if(input)return input;const label=document.createElement('label');label.id='project-file-label';label.textContent='Файл проекта ';const small=document.createElement('small');small.textContent='(необязательно)';label.append(small);input=document.createElement('input');input.type='file';input.name='project_file';input.accept='.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp';label.append(input);const comment=form.elements.comment.closest('label');comment.parentNode.insertBefore(label,comment);return input}
+function subscriberPhoneDigits(value){
+  const digits=String(value||'').replace(/\D/g,'');
+  return digits.startsWith('7')?digits.slice(1,11):digits.slice(0,10);
+}
+function formatRuPhone(value){
+  const d=subscriberPhoneDigits(value);
+  let out='+7';
+  if(d.length)out+=' ('+d.slice(0,3);
+  if(d.length>=3)out+=')';
+  if(d.length>3)out+=' '+d.slice(3,6);
+  if(d.length>6)out+='-'+d.slice(6,8);
+  if(d.length>8)out+='-'+d.slice(8,10);
+  return out;
+}
+function configurePhoneInput(phone){
+  phone.required=true;
+  phone.inputMode='numeric';
+  phone.autocomplete='tel';
+  phone.maxLength=18;
+  phone.placeholder='+7 (___) ___-__-__';
+  phone.value='+7';
+}
 function tracking(kind,model){const q=new URLSearchParams(location.search);const values={page_url:location.href,page_title:document.title,form_type:kind,door_system:model||document.body.dataset.product||'',model:model||'',referrer:document.referrer,utm_source:q.get('utm_source')||'',utm_medium:q.get('utm_medium')||'',utm_campaign:q.get('utm_campaign')||'',utm_content:q.get('utm_content')||'',utm_term:q.get('utm_term')||''};Object.entries(values).forEach(([k,v])=>ensureHidden(k).value=v)}
 function request(rawKind='calculate',model){const kind=normalizeKind(rawKind),cfg=copy[kind]||copy.calculate;
 form.reset();$('.form-status').textContent='';$('#dialog-title').textContent=cfg.title;$('#dialog-description').textContent=cfg.description;
 const note=requestDialog.querySelector('.prototype-note');if(note)note.hidden=true;
 const name=form.elements.name,phone=form.elements.phone,city=form.elements.city,construction=form.elements.construction,comment=form.elements.comment,submit=form.querySelector('[type="submit"]');
-name.required=kind==='dealer'||kind==='developer';name.placeholder=kind==='developer'?'Контактное лицо':'Имя — необязательно';setLabelText(name,kind==='developer'?'Контактное лицо':'Ваше имя ');
-phone.required=true;city.required=true;
+name.required=true;name.placeholder=kind==='developer'?'Контактное лицо':'Ваше имя';setLabelText(name,(kind==='developer'?'Контактное лицо':'Ваше имя')+' *');
+configurePhoneInput(phone);setLabelText(phone,'Телефон *');city.required=false;
 city.placeholder=kind==='developer'?'Город / объект':kind==='dealerSearch'?'Город покупки':'Ваш город';
 setLabelText(city,kind==='developer'?'Город / объект':'Город');
 comment.placeholder=cfg.comment;submit.innerHTML=cfg.submit+' <span aria-hidden="true">↗</span>';
-const company=ensureCompany(),companyLabel=labelOf(company);companyLabel.hidden=kind!=='dealer';company.required=kind==='dealer';
+const company=ensureCompany(),companyLabel=labelOf(company);companyLabel.hidden=kind!=='dealer';company.required=false;
 const file=ensureFile(),fileLabel=labelOf(file);fileLabel.hidden=!(kind==='designer'||kind==='developer');file.value='';
 const chosen=model||document.body.dataset.product||'';
 construction.value=chosen?chosen+' мм':'Не определился';
@@ -53,7 +75,9 @@ document.querySelectorAll('[data-dialog]').forEach(b=>b.onclick=()=>{if(b.datase
 const models={'36':{title:'36 мм — каркасно-щитовые',description:'Межкомнатная дверь с коробом и погонажем в едином оформлении.',features:['Полотно толщиной 36 мм','Подбор покрытия под интерьер','Комплектация коробом, наличниками и доборами']},'42':{title:'42 мм — скрытый монтаж',description:'Дверь для интерьеров, в которых важна чистота линий.',features:['Полотно толщиной 42 мм','Каркас из фанеры или алюминия — в зависимости от исполнения','Подбор покрытия, открывания и фурнитуры']},'59':{title:'59 мм — алюминиевый каркас',description:'Конструкция для высоких полотен и разных вариантов отделки.',features:['Полотно толщиной 59 мм','Алюминиевый каркас и алюминиевый торец','Покрытие и комплектацию подбираем под проект']}};
 let selected='42';document.querySelectorAll('[data-model]').forEach(b=>b.onclick=()=>{selected=b.dataset.model;const m=models[selected];$('#model-title').textContent=m.title;$('#model-description').textContent=m.description;$('#model-features').replaceChildren(...m.features.map(f=>{const li=document.createElement('li');li.textContent=f;return li}));openDialog($('#model-dialog'))});const modelRequest=$('#model-request');if(modelRequest)modelRequest.onclick=()=>{closeDialog($('#model-dialog'));request('calculate',selected)};const accountRequest=$('#account-request');if(accountRequest)accountRequest.onclick=()=>{closeDialog($('#account-dialog'));request('dealer')};
 document.querySelectorAll('a[href^="tel:"]').forEach(a=>a.addEventListener('click',()=>metricGoal('phone_click',{page_path:location.pathname,phone:a.getAttribute('href').replace('tel:','')})));document.querySelectorAll('[data-photo]').forEach(b=>b.onclick=()=>{const d=$('#photo-dialog');d.querySelector('img').src=b.dataset.photo;d.querySelector('img').alt=b.dataset.caption;d.querySelector('p').textContent=b.dataset.caption;openDialog(d)});
-form.onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,phone=f.elements.phone,submit=f.querySelector('[type="submit"]'),status=$('.form-status');if(phone.value.replace(/\D/g,'').length<10){phone.setCustomValidity('Укажите телефон с кодом города или оператора.');phone.reportValidity();return}phone.setCustomValidity('');
+form.onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,name=f.elements.name,phone=f.elements.phone,submit=f.querySelector('[type="submit"]'),status=$('.form-status');
+name.value=name.value.trim();if(!name.value){name.setCustomValidity('Укажите имя.');name.reportValidity();return}name.setCustomValidity('');
+const subscriberDigits=subscriberPhoneDigits(phone.value);if(subscriberDigits.length!==10){phone.setCustomValidity('Введите ровно 10 цифр после +7.');phone.reportValidity();return}phone.setCustomValidity('');phone.value=formatRuPhone(phone.value);
 const data=new FormData(f),file=f.elements.project_file?.files?.[0]||null,payload={};for(const [key,value] of data.entries()){if(value instanceof File)continue;payload[key]=value}if(file)payload.project_file_name=file.name;
 window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'lead_ready',form_type:f.dataset.formType,door_system:payload.door_system||'',page_path:location.pathname});
 const original=submit.innerHTML;submit.disabled=true;submit.textContent='Отправляем…';status.textContent='';
@@ -70,7 +94,10 @@ try{
   console.error('Hidden Doors lead submit:',error);
   status.textContent='Не удалось отправить заявку. Попробуйте ещё раз или позвоните: +7 932 022-11-22.';
   submit.innerHTML=original;submit.disabled=false;
-}};form.elements.phone.oninput=e=>e.target.setCustomValidity('');
+}};form.elements.name.oninput=e=>e.target.setCustomValidity('');
+form.elements.phone.addEventListener('input',e=>{e.target.value=formatRuPhone(e.target.value);e.target.setCustomValidity('')});
+form.elements.phone.addEventListener('paste',e=>{e.preventDefault();let digits=(e.clipboardData?.getData('text')||'').replace(/\D/g,'');if(digits.length===11&&(digits[0]==='7'||digits[0]==='8'))digits=digits.slice(1);e.target.value=formatRuPhone('+7'+digits.slice(0,10));e.target.setCustomValidity('')});
+form.elements.phone.addEventListener('focus',e=>{if(!e.target.value.startsWith('+7'))e.target.value='+7'});
 const doorsToggle=$('.doors-toggle'),doorsMenu=$('#doors-submenu');
 if(doorsToggle&&doorsMenu){doorsToggle.onclick=()=>{const expanded=doorsToggle.getAttribute('aria-expanded')==='true';doorsToggle.setAttribute('aria-expanded',String(!expanded));doorsMenu.hidden=expanded};document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!doorsMenu.hidden){doorsMenu.hidden=true;doorsToggle.setAttribute('aria-expanded','false');doorsToggle.focus()}});document.addEventListener('click',e=>{if(!e.target.closest('.nav-doors')){doorsMenu.hidden=true;doorsToggle.setAttribute('aria-expanded','false')}})}
 const parallaxImage=$('[data-parallax="hero"]');
