@@ -68,3 +68,17 @@ nav{align-items:center}
 @media(max-width:900px){
   .mobile-telegram{display:block!important;color:#79d45c!important}
 }
+
+/* Personal data consent */
+.privacy-consent{display:grid!important;grid-template-columns:18px 1fr;align-items:start;gap:10px!important;margin:10px 0 15px!important;font-size:12px!important;line-height:1.45;color:var(--muted)}
+.privacy-consent input{width:18px;height:18px;margin:1px 0 0;padding:0;accent-color:var(--green)}
+.privacy-consent span{display:block}
+.privacy-consent a{text-decoration:underline;text-underline-offset:2px;color:var(--ink)}
+.privacy-consent a:hover{color:#3b8a20}
+.legal-page{padding-block:55px 80px;max-width:980px}
+.legal-page h1{font-size:clamp(34px,4vw,54px);line-height:1.08;letter-spacing:-.045em;margin:0 0 18px}
+.legal-page h2{font-size:24px;margin:36px 0 12px}
+.legal-page p,.legal-page li{font-size:15px;line-height:1.7;color:#4d514c}
+.legal-page ul{padding-left:22px}
+.legal-meta{font-size:13px!important;color:var(--muted)!important;margin-bottom:30px}
+.legal-card{background:var(--paper);padding:24px 28px;border-left:3px solid var(--green);margin:25px 0}
