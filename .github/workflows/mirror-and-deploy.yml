@@ -72,11 +72,13 @@ jobs:
               depth=len(rel.parts)-1
               prefix='./' if depth==0 else '../'*depth
 
-              s=s.replace(
-                  '<button class="account" data-dialog="account">Кабинет дилера <span aria-hidden="true">↗</span></button>',
-                  '<a class="account" href="https://lk.hidden-doors.ru/" target="_blank" rel="noopener noreferrer">Кабинет дилера <span aria-hidden="true">↗</span></a>'
+              s=re.sub(
+                  r'<button class="([^"]+)" data-dialog="account">Кабинет дилера <span(?: aria-hidden="true")?>↗</span></button>',
+                  r'<a class="\1" href="https://lk.hidden-doors.ru/" target="_blank" rel="noopener noreferrer">Кабинет дилера <span aria-hidden="true">↗</span></a>',
+                  s
               )
               s=s.replace('<div class="prototype-note">Предпросмотр формы. Данные никуда не отправляются.</div>','')
+              s=s.replace('<p>Дилерский кабинет предусмотрен для работы с продуктом и заказами. Доступ подключается партнёрам по мере запуска функционала.</p>','<p>Дилерский кабинет для работы с продуктом и заказами.</p>')
               s=s.replace(
                   '<button class="button green" type="submit">Проверить заявку <span>↗</span></button>',
                   '<button class="button green" type="submit">Отправить заявку <span>↗</span></button>'
