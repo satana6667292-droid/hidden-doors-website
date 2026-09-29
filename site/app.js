@@ -1,8 +1,33 @@
 const METRIKA_ID=95250042;
 const LEAD_API_URL='https://lk.hidden-doors.ru/api/site/lead';
+const TELEGRAM_URL='https://t.me/Door_Dealer';
 (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(let j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r)return}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id='+METRIKA_ID,'ym');
 ym(METRIKA_ID,'init',{ssr:true,webvisor:true,clickmap:true,accurateTrackBounce:true,trackLinks:true});
 function metricGoal(name,params={}){if(typeof window.ym==='function')window.ym(METRIKA_ID,'reachGoal',name,params)}
+function telegramLink(className,label){
+  const a=document.createElement('a');
+  a.href=TELEGRAM_URL;
+  a.target='_blank';
+  a.rel='noopener noreferrer';
+  a.className=className;
+  a.textContent=label;
+  a.addEventListener('click',()=>metricGoal('telegram_click',{placement:className.includes('footer')?'footer':className.includes('mobile')?'mobile_menu':'header',page_path:location.pathname}));
+  return a;
+}
+function injectTelegramLinks(){
+  const headerContact=document.querySelector('.header-contact');
+  if(headerContact&&!headerContact.querySelector('.header-telegram'))headerContact.append(telegramLink('header-telegram','Telegram · Door Dealer ↗'));
+
+  const navLinks=document.querySelector('.nav-links');
+  if(navLinks&&!navLinks.querySelector('.mobile-telegram'))navLinks.append(telegramLink('mobile-telegram','Telegram · Door Dealer ↗'));
+
+  const footer=document.querySelector('footer');
+  if(footer&&!footer.querySelector('.footer-telegram')){
+    const vk=footer.querySelector('a[href*="vk.com/hiddendoors"]');
+    if(vk)vk.insertAdjacentElement('afterend',telegramLink('footer-telegram','Telegram · Door Dealer ↗'));
+  }
+}
+injectTelegramLinks();
 const $=s=>document.querySelector(s);const dialogs=[...document.querySelectorAll('dialog')];
 function openDialog(d){d.showModal();document.body.classList.add('modal-open')}
 function closeDialog(d){d.close();if(!dialogs.some(x=>x.open))document.body.classList.remove('modal-open')}
