@@ -86,6 +86,9 @@ jobs:
               s=re.sub(r'<dialog id="account-dialog"[\s\S]*?</dialog>','',s)
               s=re.sub(r'app\.js\?v=[^"\'\s<]+','app.js?v=20260929-legal1',s)
               s=re.sub(r'style\.css\?v=[^"\'\s<]+','style.css?v=20260929-legal1',s)
+              preview_base='https://satana6667292-droid.github.io/hidden-doors-website'
+              prod_base='https://hidden-doors.ru'
+              s=s.replace(preview_base,prod_base)
               s=s.replace('<label>Ваше имя<input name="name"', '<label>Ваше имя *<input name="name"')
               s=s.replace('<label>Телефон<input name="phone"', '<label>Телефон *<input name="phone"')
               s=s.replace('<label>Город<input name="city" autocomplete="address-level2" required', '<label>Город<input name="city" autocomplete="address-level2"')
