@@ -1,9 +1,0 @@
-# Hidden Doors production redirects
-# Import this inside the hidden-doors.ru site block before the static file handler.
-
-redir /hiddendoors /hidden-doors/ 301
-redir /hiddendoors/ /hidden-doors/ 301
-
-# Canonical host redirects should live in the main Caddy config:
-# http://hidden-doors.ru  -> https://hidden-doors.ru
-# https://www.hidden-doors.ru -> https://hidden-doors.ru
