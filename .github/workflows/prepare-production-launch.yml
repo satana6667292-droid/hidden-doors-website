@@ -1,0 +1,42 @@
+name: Prepare production launch
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-production:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Activate production indexing and custom domain
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root=Path('site')
+          for p in root.rglob('*.html'):
+              s=p.read_text(encoding='utf-8')
+              s=re.sub(
+                  r'<meta name="robots" content="noindex,follow,max-image-preview:large">',
+                  '<meta name="robots" content="index,follow,max-image-preview:large">',
+                  s
+              )
+              p.write_text(s,encoding='utf-8')
+
+          Path('site/CNAME').write_text('hidden-doors.ru\n',encoding='utf-8')
+          PY
+
+          grep -R 'name="robots" content="noindex,follow,max-image-preview:large"' site --include='*.html' && exit 1 || true
+          test "$(cat site/CNAME)" = "hidden-doors.ru"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site
+          git commit -m "launch: activate hidden-doors.ru production indexing"
+          git push origin HEAD:main
