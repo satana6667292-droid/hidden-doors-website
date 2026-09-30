@@ -156,12 +156,13 @@ jobs:
           html="$(curl --fail --silent --show-error --max-time 20 "$base/")"
           app="$(curl --fail --silent --show-error --max-time 20 "$base/app.js?v=20260929-leads1")"
 
-          echo "$app" | grep -Fq "const METRIKA_ID=95250042;"
-          echo "$app" | grep -Fq "ym(METRIKA_ID,'init'"
-          echo "$app" | grep -Fq "metricGoal('lead_success'"
-          echo "$app" | grep -Fq "subscriberDigits.length!==10"
-          echo "$app" | grep -Fq "name.required=true"
-          echo "$app" | grep -Fq "city.required=false"
+          grep -Fq "const METRIKA_ID=95250042;" <<<"$app"
+          grep -Fq "ym(METRIKA_ID,'init'" <<<"$app"
+          grep -Fq "metricGoal('lead_success'" <<<"$app"
+          grep -Fq "subscriberDigits.length!==10" <<<"$app"
+          grep -Fq "name.required=true" <<<"$app"
+          grep -Fq "city.required=false" <<<"$app"
+          ! grep -Fq "project_file" <<<"$app"
 
           curl --fail --silent --show-error --max-time 20             "https://mc.yandex.ru/metrika/tag.js?id=95250042"             -o /tmp/yandex-metrika-tag.js
           test -s /tmp/yandex-metrika-tag.js
