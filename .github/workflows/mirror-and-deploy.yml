@@ -109,6 +109,17 @@ jobs:
                       bad.append(f'{p}: {token}')
           if bad:
               raise SystemExit('\n'.join(bad))
+
+          # Production launch: activate indexing and root domain
+          for p in root.rglob('*.html'):
+              s=p.read_text(encoding='utf-8')
+              s=s.replace(
+                  '<meta name="robots" content="noindex,follow,max-image-preview:large">',
+                  '<meta name="robots" content="index,follow,max-image-preview:large">'
+              )
+              p.write_text(s,encoding='utf-8')
+
+          Path('site/CNAME').write_text('hidden-doors.ru\n',encoding='utf-8')
           PY
 
       - name: Store mirrored website in the repository
