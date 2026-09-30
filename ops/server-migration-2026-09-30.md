@@ -2,112 +2,160 @@
 
 Дата подготовки: 2026-09-30.
 
-## Что уже подготовлено
+## Проверенный сервер
 
-Сайт остаётся статическим и продолжает храниться в `site/`. Для миграции добавлены:
+Целевой VPS:
 
-- ручной workflow `.github/workflows/deploy-to-vps.yml`;
-- Caddy-конфигурация `ops/hidden-doors-site.caddy`;
-- идемпотентная подготовка каталога `ops/server-preflight.sh`.
+- host: `hiplet-127827`;
+- IPv4: `185.161.69.253`;
+- Ubuntu 24.04;
+- web server: Nginx 1.24;
+- Caddy не установлен;
+- 80/443 уже обслуживаются Nginx;
+- UFW разрешает 22/80/443;
+- Certbot установлен, timer активен;
+- Docker не установлен.
 
-Текущий GitHub Pages workflow намеренно не изменён. До переключения DNS GitHub Pages остаётся резервным действующим хостингом.
+Основной сайт добавляется как отдельный Nginx virtual host и не должен менять существующие upstream-сервисы на 127.0.0.1:8787 и 127.0.0.1:8788.
 
-## Схема на VPS
+## Схема публикации
 
 ```
 GitHub main
   -> GitHub Actions
   -> /srv/hidden-doors/releases/<git-sha>
   -> /srv/hidden-doors/current
-  -> Caddy
+  -> Nginx
   -> hidden-doors.ru
 ```
 
 Публикация атомарная: новый релиз загружается в отдельный каталог, после проверки `index.html` переключается симлинк `current`. Хранятся пять последних релизов.
 
-## Что workflow не переносит
+## Файлы миграции
 
-Из server payload исключаются два файла, нужные только GitHub Pages:
+- `.github/workflows/deploy-to-vps.yml` — ручной deploy на VPS;
+- `ops/nginx/hidden-doors.bootstrap.conf` — HTTP-only bootstrap до выпуска сертификата;
+- `ops/nginx/hidden-doors.conf` — финальный HTTPS virtual host;
+- `ops/server-preflight.sh` — подготовка `/srv/hidden-doors`.
 
-- `site/CNAME`;
-- `site/.nojekyll`.
+Текущий GitHub Pages workflow пока не изменяется. До DNS cutover он остаётся резервным вариантом.
 
-Они пока остаются в репозитории, чтобы не ломать текущий Pages до cutover.
+## GitHub Secrets
 
-## Репозиторные secrets
+Перед первым deploy добавить:
 
-Перед первым серверным deploy необходимо добавить:
-
-- `PROD_SSH_HOST` — адрес VPS;
-- `PROD_SSH_PORT` — SSH-порт, можно оставить 22;
-- `PROD_SSH_USER` — отдельный пользователь deploy;
-- `PROD_SSH_PRIVATE_KEY` — приватный ED25519-ключ GitHub Actions;
-- `PROD_SSH_KNOWN_HOSTS` — закреплённая строка host key VPS;
-- `PROD_HEALTHCHECK_URL` — необязательно. После DNS cutover можно поставить `https://hidden-doors.ru/`.
-
-Workflow специально не использует `ssh-keyscan` во время deploy: host key должен быть закреплён заранее.
+- `PROD_SSH_HOST=185.161.69.253`;
+- `PROD_SSH_PORT=22`;
+- `PROD_SSH_USER` — отдельный deploy user;
+- `PROD_SSH_PRIVATE_KEY`;
+- `PROD_SSH_KNOWN_HOSTS`;
+- `PROD_HEALTHCHECK_URL` — необязательно, лучше добавить уже после DNS cutover.
 
 ## Подготовка сервера
 
-1. Создать отдельного пользователя deploy без root-доступа.
-2. Добавить его публичный SSH-ключ в `authorized_keys`.
+1. Создать отдельного deploy user без root-доступа.
+2. Добавить публичный SSH-ключ в его `authorized_keys`.
 3. Выполнить от root:
 
 ```bash
 sudo bash ops/server-preflight.sh <deploy-user>
 ```
 
-4. Проверить, что deploy-user может писать в `/srv/hidden-doors/releases`.
-5. Скопировать `ops/hidden-doors-site.caddy` в каталог Caddy, который уже импортируется основной конфигурацией.
-6. До финального переключения DNS Caddy-блок можно держать подготовленным, но не включать, если это вызывает преждевременные попытки выпуска TLS.
-
-## Первый тест без переключения DNS
-
-Первый deploy запускается только вручную:
-
-Actions -> Deploy Hidden Doors to VPS (manual) -> Run workflow.
-
-В поле подтверждения ввести:
-
-```
-DEPLOY
-```
-
-После выполнения на сервере должны существовать:
+4. Проверить права на `/srv/hidden-doors/releases`.
+5. Выполнить первый ручной GitHub Actions deploy.
+6. Проверить наличие:
 
 ```
 /srv/hidden-doors/releases/<sha>/index.html
-/srv/hidden-doors/current -> /srv/hidden-doors/releases/<sha>
+/srv/hidden-doors/current
 ```
 
-Это ещё не переключает посетителей с GitHub Pages.
+## Bootstrap Nginx до DNS cutover
 
-## Cutover
+Скопировать `ops/nginx/hidden-doors.bootstrap.conf` в:
 
-После успешной загрузки файлов и проверки Caddy:
+```
+/etc/nginx/sites-available/hidden-doors
+```
 
-1. Включить Caddy-конфигурацию сайта и проверить `caddy validate`.
-2. Перезагрузить Caddy без остановки остальных сервисов.
-3. В REG.RU заменить только DNS корневого сайта:
-   - `hidden-doors.ru` -> A-запись VPS;
-   - `www.hidden-doors.ru` -> CNAME на `hidden-doors.ru` либо A на тот же VPS.
-4. Не менять DNS поддоменов `catalog`, `shop`, `info`, `lk`.
-5. После распространения DNS проверить HTTPS и редиректы.
-6. Только после стабильной работы убрать GitHub Pages deployment из основного workflow.
+Затем создать symlink:
 
-## Контроль после переключения
+```bash
+ln -s /etc/nginx/sites-available/hidden-doors /etc/nginx/sites-enabled/hidden-doors
+nginx -t
+systemctl reload nginx
+```
+
+Это не требует сертификата и безопасно до переключения DNS.
+
+Локальная проверка на VPS:
+
+```bash
+curl -I -H 'Host: hidden-doors.ru' http://127.0.0.1/
+curl -I -H 'Host: hidden-doors.ru' http://127.0.0.1/robots.txt
+```
+
+## DNS cutover
+
+После успешного server-side теста изменить только записи корневого сайта:
+
+- `hidden-doors.ru` -> A `185.161.69.253`;
+- `www.hidden-doors.ru` -> CNAME `hidden-doors.ru` либо A `185.161.69.253`.
+
+Не менять:
+
+- `catalog.hidden-doors.ru`;
+- `shop.hidden-doors.ru`;
+- `info.hidden-doors.ru`;
+- `lk.hidden-doors.ru`.
+
+Дождаться, пока публичные резолверы начнут отдавать `185.161.69.253`.
+
+## Выпуск TLS
+
+После распространения DNS:
+
+```bash
+certbot certonly --webroot   -w /srv/hidden-doors/current   -d hidden-doors.ru   -d www.hidden-doors.ru
+```
+
+Проверить:
+
+```bash
+certbot certificates
+test -s /etc/letsencrypt/live/hidden-doors.ru/fullchain.pem
+test -s /etc/letsencrypt/live/hidden-doors.ru/privkey.pem
+```
+
+## Переход на финальный HTTPS virtual host
+
+После успешного выпуска сертификата заменить содержимое:
+
+```
+/etc/nginx/sites-available/hidden-doors
+```
+
+на `ops/nginx/hidden-doors.conf`, затем:
+
+```bash
+nginx -t && systemctl reload nginx
+```
+
+Используется именно reload, не stop/start.
+
+## Контроль
 
 - `https://hidden-doors.ru/` -> 200;
 - `http://hidden-doors.ru/` -> HTTPS;
-- `https://www.hidden-doors.ru/` -> 301/308 на `https://hidden-doors.ru/`;
+- `https://www.hidden-doors.ru/` -> redirect на основной host;
 - `/hiddendoors` и `/hiddendoors/` -> 301 на `/hidden-doors/`;
 - `/robots.txt` -> 200;
 - `/sitemap.xml` -> 200;
 - неизвестный URL -> фирменная `404.html`;
-- `catalog.hidden-doors.ru`, `shop.hidden-doors.ru`, `info.hidden-doors.ru`, `lk.hidden-doors.ru` не затронуты.
+- существующие Bitrix MCP и Telegram endpoints остаются доступны.
 
 ## Откат
 
-Пока DNS TTL не повышен и GitHub Pages не отключён, быстрый откат — вернуть A/CNAME корневого сайта на GitHub Pages.
+До отключения GitHub Pages быстрый DNS rollback — вернуть прежние GitHub Pages A/CNAME записи.
 
-На самом VPS откат релиза выполняется переключением `/srv/hidden-doors/current` на предыдущий каталог из `/srv/hidden-doors/releases/`.
+На VPS откат контента — переключить `/srv/hidden-doors/current` на предыдущий каталог в `/srv/hidden-doors/releases/`.
