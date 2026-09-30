@@ -120,7 +120,6 @@ function ensurePrivacyConsent(){
   ensureHidden('privacy_policy_version').value=PRIVACY_POLICY_VERSION;
   return wrap;
 }
-function ensureFile(){let input=form.elements.project_file;if(input)return input;const label=document.createElement('label');label.id='project-file-label';label.textContent='Файл проекта ';const small=document.createElement('small');small.textContent='(необязательно)';label.append(small);input=document.createElement('input');input.type='file';input.name='project_file';input.accept='.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp';label.append(input);const comment=form.elements.comment.closest('label');comment.parentNode.insertBefore(label,comment);return input}
 function subscriberPhoneDigits(value){
   const digits=String(value||'').replace(/\D/g,'');
   return digits.startsWith('7')?digits.slice(1,11):digits.slice(0,10);
@@ -154,7 +153,6 @@ city.placeholder=kind==='developer'?'Город / объект':kind==='dealerSe
 setLabelText(city,kind==='developer'?'Город / объект':'Город');
 comment.placeholder=cfg.comment;submit.innerHTML=cfg.submit+' <span aria-hidden="true">↗</span>';
 const company=ensureCompany(),companyLabel=labelOf(company);companyLabel.hidden=kind!=='dealer';company.required=false;
-const file=ensureFile(),fileLabel=labelOf(file);fileLabel.hidden=!(kind==='designer'||kind==='developer');file.value='';
 const chosen=model||document.body.dataset.product||'';
 construction.value=chosen?chosen+' мм':'Не определился';
 const constructionLabel=$('#construction-label');constructionLabel.hidden=kind==='dealer'||Boolean(chosen);
@@ -174,7 +172,7 @@ ensurePrivacyConsent();
 form.onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,name=f.elements.name,phone=f.elements.phone,submit=f.querySelector('[type="submit"]'),status=$('.form-status');
 name.value=name.value.trim();if(!name.value){name.setCustomValidity('Укажите имя.');name.reportValidity();return}name.setCustomValidity('');
 const subscriberDigits=subscriberPhoneDigits(phone.value);if(subscriberDigits.length!==10){phone.setCustomValidity('Введите ровно 10 цифр после +7.');phone.reportValidity();return}phone.setCustomValidity('');phone.value=formatRuPhone(phone.value);
-const data=new FormData(f),file=f.elements.project_file?.files?.[0]||null,payload={};for(const [key,value] of data.entries()){if(value instanceof File)continue;payload[key]=value}if(file)payload.project_file_name=file.name;
+const data=new FormData(f),payload={};for(const [key,value] of data.entries()){if(value instanceof File)continue;payload[key]=value}
 window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'lead_ready',form_type:f.dataset.formType,door_system:payload.door_system||'',page_path:location.pathname});
 const original=submit.innerHTML;submit.disabled=true;submit.textContent='Отправляем…';status.textContent='';
 try{
