@@ -134,6 +134,8 @@ https://hidden-doors-site.138.124.69.108.sslip.io/
 
 DNS `hidden-doors.ru` при этом не меняется.
 
+Preview закрыт по IP на уровне Caddy. Разрешён только VPN egress IP `5.183.253.169`; любой другой источник получает `403 Forbidden`. Production-домен этим ограничением не затрагивается.
+
 На preview проверяются:
 
 - главная;
