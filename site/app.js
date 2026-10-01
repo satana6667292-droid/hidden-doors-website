@@ -159,11 +159,16 @@ function request(rawKind='calculate',model){const kind=normalizeKind(rawKind),cf
 form.reset();ensurePrivacyConsent();$('.form-status').textContent='';$('#dialog-title').textContent=cfg.title;$('#dialog-description').textContent=cfg.description;
 const note=requestDialog.querySelector('.prototype-note');if(note)note.hidden=true;
 const name=form.elements.name,phone=form.elements.phone,city=form.elements.city,construction=form.elements.construction,comment=form.elements.comment,submit=form.querySelector('[type="submit"]');
+const mobileForm=matchMedia('(max-width: 600px)').matches;
 name.required=true;name.placeholder=kind==='developer'?'Контактное лицо':'Ваше имя';setLabelText(name,(kind==='developer'?'Контактное лицо':'Ваше имя')+' *');
 configurePhoneInput(phone);setLabelText(phone,'Телефон *');city.required=false;
 city.placeholder=kind==='developer'?'Город / объект':kind==='dealerSearch'?'Город покупки':'Ваш город';
 setLabelText(city,kind==='developer'?'Город / объект':'Город');
 comment.placeholder=cfg.comment;submit.innerHTML=cfg.submit+' <span aria-hidden="true">↗</span>';
+const cityLabel=labelOf(city),commentLabel=labelOf(comment);
+if(cityLabel)cityLabel.hidden=mobileForm&&(kind==='calculate'||kind==='stock');
+if(commentLabel)commentLabel.hidden=mobileForm&&(kind==='calculate'||kind==='stock'||kind==='dealerSearch');
+if(mobileForm&&(kind==='calculate'||kind==='stock'))$('#dialog-description').textContent='Оставьте имя и телефон — менеджер уточнит размеры и детали.';
 const company=ensureCompany(),companyLabel=labelOf(company);companyLabel.hidden=kind!=='dealer';company.required=false;
 const chosen=model||document.body.dataset.product||'';
 construction.value=chosen?chosen+' мм':'Не определился';
@@ -210,14 +215,4 @@ const parallaxImage=$('[data-parallax="hero"]');
 if(parallaxImage){const reduced=matchMedia('(prefers-reduced-motion: reduce)'),desktop=matchMedia('(min-width: 901px)'),hero=parallaxImage.closest('.hero');let scheduled=false;const update=()=>{scheduled=false;if(reduced.matches||!desktop.matches){parallaxImage.style.removeProperty('--parallax-y');return}const r=hero.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;const amount=Math.max(-22,Math.min(22,-r.top*.055));parallaxImage.style.setProperty('--parallax-y',amount+'px')};const queue=()=>{if(!scheduled){scheduled=true;requestAnimationFrame(update)}};addEventListener('scroll',queue,{passive:true});addEventListener('resize',queue,{passive:true});reduced.addEventListener('change',queue);desktop.addEventListener('change',queue);queue()}
 const finishData=$('#finish-data');if(finishData){const finishes=JSON.parse(finishData.textContent);document.querySelectorAll('[data-finish]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-finish]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));const f=finishes[Number(b.dataset.finish)];$('#finish-content h3').textContent=f[1];$('#finish-content p').textContent=f[2]})}
 
-// Hidden Doors 2026 catalog lives on the primary site at /catalog/.
-(()=>{
-  const nav=document.querySelector('.nav-links');
-  if(!nav||nav.querySelector('[data-hd-catalog-link]'))return;
-  const a=document.createElement('a');
-  a.href=new URL('/catalog/', location.origin).toString();
-  a.textContent='Каталог 2026';
-  a.dataset.hdCatalogLink='true';
-  const contacts=[...nav.querySelectorAll('a')].find(x=>x.getAttribute('href')==='#contacts');
-  nav.insertBefore(a,contacts||null);
-})();
+
