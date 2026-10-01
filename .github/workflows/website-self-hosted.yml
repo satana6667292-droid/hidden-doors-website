@@ -50,6 +50,13 @@ jobs:
           ref: ${{ inputs.operation == 'deploy-preview' && inputs.ref || github.ref }}
           fetch-depth: 1
 
+      - name: Build web catalog under /catalog
+        if: ${{ inputs.operation == 'deploy-preview' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ops/build-catalog.sh
+
       - name: Validate website source
         if: ${{ inputs.operation == 'deploy-preview' }}
         shell: bash
@@ -59,6 +66,8 @@ jobs:
           test -s site/robots.txt
           test -s site/sitemap.xml
           test -s site/404.html
+          test -s site/catalog/index.html
+          test -d site/catalog/assets/pages
           grep -Fq 'https://hidden-doors.ru/sitemap.xml' site/robots.txt
           grep -Fq 'https://hidden-doors.ru/' site/sitemap.xml
           bash -n ops/hidden-doors-website-root.sh
