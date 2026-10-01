@@ -19,10 +19,12 @@ mkdir -p "$tmp/unpacked" "$tmp/catalog-site"
 unzip -q "$tmp/site-bundle.zip" -d "$tmp/unpacked"
 cp -a "$tmp/unpacked/hidden-doors-catalog-2026-site/." "$tmp/catalog-site/"
 
-# Approved replacement: label 27 = physical asset page-028.webp
-cat page-overrides/page-028.b64.part* | base64 -d > "$tmp/page-028.webp"
-cp "$tmp/page-028.webp" "$tmp/catalog-site/assets/pages/page-028.webp"
-cp "$tmp/page-028.webp" "$tmp/catalog-site/assets/thumbs/page-028.webp"
+# Approved/corrected catalog page overrides.
+for n in 002 003 028; do
+  cat page-overrides/page-${n}.b64.part* | base64 -d > "$tmp/page-${n}.webp"
+  cp "$tmp/page-${n}.webp" "$tmp/catalog-site/assets/pages/page-${n}.webp"
+  cp "$tmp/page-${n}.webp" "$tmp/catalog-site/assets/thumbs/page-${n}.webp"
+done
 
 cp editor-pre.js editor-v4.js editor-media.js visual-fixes.js resolved-corrections.js public-view.js public-view.css "$tmp/catalog-site/"
 
@@ -33,14 +35,14 @@ import sys
 p=Path(sys.argv[1])
 s=p.read_text(encoding="utf-8")
 needle='<script src="app.js"></script>'
-inject='''<script src="editor-pre.js?v=site-master-1"></script>
+inject='''<script src="editor-pre.js?v=site-master-2"></script>
   <script src="app.js"></script>
-  <script src="resolved-corrections.js?v=site-master-1"></script>
-  <script src="editor-v4.js?v=site-master-1"></script>
-  <script src="editor-media.js?v=site-master-1"></script>
-  <link rel="stylesheet" href="public-view.css?v=site-public-1">
-  <script src="public-view.js?v=site-public-1"></script>
-  <script src="visual-fixes.js?v=site-master-1"></script>'''
+  <script src="resolved-corrections.js?v=site-master-2"></script>
+  <script src="editor-v4.js?v=site-master-2"></script>
+  <script src="editor-media.js?v=site-master-2"></script>
+  <link rel="stylesheet" href="public-view.css?v=site-public-2">
+  <script src="public-view.js?v=site-public-2"></script>
+  <script src="visual-fixes.js?v=site-master-2"></script>'''
 if needle not in s:
     raise SystemExit("Catalog index: app.js script tag not found")
 s=s.replace(needle, inject, 1)
