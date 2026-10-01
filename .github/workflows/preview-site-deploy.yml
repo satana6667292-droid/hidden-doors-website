@@ -58,7 +58,7 @@ jobs:
             echo "## Hidden Doors preview"
             echo
             echo "Branch: preview-site"
-            echo "Commit: `$(git rev-parse --short HEAD)`"
+            echo "Commit: $(git rev-parse --short HEAD)"
             echo
             echo "Preview: https://hidden-doors-site.138.124.69.108.sslip.io/"
             echo
