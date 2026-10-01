@@ -1,0 +1,37 @@
+name: One-time production promotion
+
+on:
+  push:
+    branches:
+      - preview-site
+    paths:
+      - '.github/workflows/promote-production-once.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hidden-doors-production-promotion
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: [self-hosted, Linux, X64, hidden-doors-website]
+    timeout-minutes: 20
+    steps:
+      - name: Promote verified preview image to production
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n /usr/local/sbin/hidden-doors-website promote-production PRODUCTION
+
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Hidden Doors production promotion"
+            echo
+            echo "Production: https://hidden-doors.ru/"
+            echo "Source: verified VPN preview image"
+          } >> "$GITHUB_STEP_SUMMARY"
