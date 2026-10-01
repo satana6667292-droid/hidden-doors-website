@@ -209,3 +209,15 @@ if(doorsToggle&&doorsMenu){doorsToggle.onclick=()=>{const expanded=doorsToggle.g
 const parallaxImage=$('[data-parallax="hero"]');
 if(parallaxImage){const reduced=matchMedia('(prefers-reduced-motion: reduce)'),desktop=matchMedia('(min-width: 901px)'),hero=parallaxImage.closest('.hero');let scheduled=false;const update=()=>{scheduled=false;if(reduced.matches||!desktop.matches){parallaxImage.style.removeProperty('--parallax-y');return}const r=hero.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;const amount=Math.max(-22,Math.min(22,-r.top*.055));parallaxImage.style.setProperty('--parallax-y',amount+'px')};const queue=()=>{if(!scheduled){scheduled=true;requestAnimationFrame(update)}};addEventListener('scroll',queue,{passive:true});addEventListener('resize',queue,{passive:true});reduced.addEventListener('change',queue);desktop.addEventListener('change',queue);queue()}
 const finishData=$('#finish-data');if(finishData){const finishes=JSON.parse(finishData.textContent);document.querySelectorAll('[data-finish]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-finish]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));const f=finishes[Number(b.dataset.finish)];$('#finish-content h3').textContent=f[1];$('#finish-content p').textContent=f[2]})}
+
+// Hidden Doors 2026 catalog lives on the primary site at /catalog/.
+(()=>{
+  const nav=document.querySelector('.nav-links');
+  if(!nav||nav.querySelector('[data-hd-catalog-link]'))return;
+  const a=document.createElement('a');
+  a.href=new URL('/catalog/', location.origin).toString();
+  a.textContent='Каталог 2026';
+  a.dataset.hdCatalogLink='true';
+  const contacts=[...nav.querySelectorAll('a')].find(x=>x.getAttribute('href')==='#contacts');
+  nav.insertBefore(a,contacts||null);
+})();
