@@ -1,6 +1,9 @@
 name: Preview site deploy
 
 on:
+  push:
+    branches:
+      - preview-site
   workflow_dispatch:
 
 permissions:
