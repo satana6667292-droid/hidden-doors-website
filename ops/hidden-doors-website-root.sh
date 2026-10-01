@@ -278,14 +278,23 @@ deploy_preview(){
   log "Preview ready: https://$PREVIEW_HOST/"
 }
 
+public_dns_matches(){
+  local host="$1"
+  local resolver
+  for resolver in 1.1.1.1 8.8.8.8; do
+    dig @"$resolver" +short A "$host" | grep -Fxq "$SERVER_IP" \
+      || return 1
+  done
+}
+
 promote_production(){
   local confirmation="${1:-}"
   [[ "$confirmation" == "PRODUCTION" ]] || die "Explicit PRODUCTION confirmation required."
 
-  getent ahostsv4 "$PRODUCTION_HOST" | awk '{print $1}' | grep -Fxq "$SERVER_IP" \
-    || die "$PRODUCTION_HOST does not resolve to $SERVER_IP yet."
-  getent ahostsv4 "$WWW_HOST" | awk '{print $1}' | grep -Fxq "$SERVER_IP" \
-    || die "$WWW_HOST does not resolve to $SERVER_IP yet."
+  public_dns_matches "$PRODUCTION_HOST" \
+    || die "$PRODUCTION_HOST is not yet resolving to $SERVER_IP on both Cloudflare and Google public DNS."
+  public_dns_matches "$WWW_HOST" \
+    || die "$WWW_HOST is not yet resolving to $SERVER_IP on both Cloudflare and Google public DNS."
 
   local prod_app prod_db proxy
   prod_app="$(production_container app)"
