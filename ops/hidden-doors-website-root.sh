@@ -10,6 +10,7 @@ PREVIEW_HOST="hidden-doors-site.138.124.69.108.sslip.io"
 PRODUCTION_HOST="hidden-doors.ru"
 WWW_HOST="www.hidden-doors.ru"
 SERVER_IP="138.124.69.108"
+VPN_ALLOWED_IP="5.183.253.169"
 
 CADDY_RUNTIME_FILE="/data/runtime/hidden-doors-website.caddy"
 LOCK_FILE="/var/lock/hidden-doors-website.lock"
@@ -114,7 +115,7 @@ write_route(){
 $PREVIEW_HOST {
   encode zstd gzip
 
-  @vpn remote_ip 5.183.253.169
+  @vpn remote_ip $VPN_ALLOWED_IP
   handle @vpn {
     reverse_proxy $NETWORK_ALIAS:8080
   }
