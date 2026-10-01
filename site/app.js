@@ -38,11 +38,17 @@ function applyLaunchCleanup(){
   document.querySelectorAll('.account[data-dialog="account"]').forEach(button=>{
     const a=document.createElement('a');
     a.className=button.className;
-    a.href='https://lk.hidden-doors.ru/';
+    a.href=TELEGRAM_URL;
     a.target='_blank';
     a.rel='noopener noreferrer';
     a.innerHTML='Кабинет дилера <span aria-hidden="true">↗</span>';
     button.replaceWith(a);
+  });
+
+  document.querySelectorAll('a.account').forEach(a=>{
+    a.href=TELEGRAM_URL;
+    a.target='_blank';
+    a.rel='noopener noreferrer';
   });
 
   const defaultSubmit=document.querySelector('#request-form [type="submit"]');
@@ -92,7 +98,11 @@ function ensureHoneypot(){let input=form.elements.website;if(input)return input;
 function ensureCompany(){let input=form.elements.company;if(input)return input;const label=document.createElement('label');label.id='company-label';label.textContent='Компания / салон';input=document.createElement('input');input.name='company';input.autocomplete='organization';input.placeholder='Название компании';input.maxLength=150;label.append(input);const construction=$('#construction-label');construction.parentNode.insertBefore(label,construction);return input}
 function ensurePrivacyConsent(){
   let wrap=form.querySelector('.privacy-consent');
-  if(wrap)return wrap;
+  if(wrap){
+    const input=wrap.querySelector('input[type="checkbox"]');
+    if(input)input.checked=true;
+    return wrap;
+  }
   wrap=document.createElement('label');
   wrap.className='privacy-consent';
   const input=document.createElement('input');
@@ -100,6 +110,8 @@ function ensurePrivacyConsent(){
   input.name='privacy_consent';
   input.value='yes';
   input.required=true;
+  input.defaultChecked=true;
+  input.checked=true;
   const copy=document.createElement('span');
   copy.append('Я даю ');
   const consent=document.createElement('a');
@@ -147,11 +159,16 @@ function request(rawKind='calculate',model){const kind=normalizeKind(rawKind),cf
 form.reset();ensurePrivacyConsent();$('.form-status').textContent='';$('#dialog-title').textContent=cfg.title;$('#dialog-description').textContent=cfg.description;
 const note=requestDialog.querySelector('.prototype-note');if(note)note.hidden=true;
 const name=form.elements.name,phone=form.elements.phone,city=form.elements.city,construction=form.elements.construction,comment=form.elements.comment,submit=form.querySelector('[type="submit"]');
+const mobileForm=matchMedia('(max-width: 600px)').matches;
 name.required=true;name.placeholder=kind==='developer'?'Контактное лицо':'Ваше имя';setLabelText(name,(kind==='developer'?'Контактное лицо':'Ваше имя')+' *');
 configurePhoneInput(phone);setLabelText(phone,'Телефон *');city.required=false;
 city.placeholder=kind==='developer'?'Город / объект':kind==='dealerSearch'?'Город покупки':'Ваш город';
 setLabelText(city,kind==='developer'?'Город / объект':'Город');
 comment.placeholder=cfg.comment;submit.innerHTML=cfg.submit+' <span aria-hidden="true">↗</span>';
+const cityLabel=labelOf(city),commentLabel=labelOf(comment);
+if(cityLabel)cityLabel.hidden=mobileForm&&(kind==='calculate'||kind==='stock');
+if(commentLabel)commentLabel.hidden=mobileForm&&(kind==='calculate'||kind==='stock'||kind==='dealerSearch');
+if(mobileForm&&(kind==='calculate'||kind==='stock'))$('#dialog-description').textContent='Оставьте имя и телефон — менеджер уточнит размеры и детали.';
 const company=ensureCompany(),companyLabel=labelOf(company);companyLabel.hidden=kind!=='dealer';company.required=false;
 const chosen=model||document.body.dataset.product||'';
 construction.value=chosen?chosen+' мм':'Не определился';
@@ -197,3 +214,5 @@ if(doorsToggle&&doorsMenu){doorsToggle.onclick=()=>{const expanded=doorsToggle.g
 const parallaxImage=$('[data-parallax="hero"]');
 if(parallaxImage){const reduced=matchMedia('(prefers-reduced-motion: reduce)'),desktop=matchMedia('(min-width: 901px)'),hero=parallaxImage.closest('.hero');let scheduled=false;const update=()=>{scheduled=false;if(reduced.matches||!desktop.matches){parallaxImage.style.removeProperty('--parallax-y');return}const r=hero.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;const amount=Math.max(-22,Math.min(22,-r.top*.055));parallaxImage.style.setProperty('--parallax-y',amount+'px')};const queue=()=>{if(!scheduled){scheduled=true;requestAnimationFrame(update)}};addEventListener('scroll',queue,{passive:true});addEventListener('resize',queue,{passive:true});reduced.addEventListener('change',queue);desktop.addEventListener('change',queue);queue()}
 const finishData=$('#finish-data');if(finishData){const finishes=JSON.parse(finishData.textContent);document.querySelectorAll('[data-finish]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-finish]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));const f=finishes[Number(b.dataset.finish)];$('#finish-content h3').textContent=f[1];$('#finish-content p').textContent=f[2]})}
+
+
