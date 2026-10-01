@@ -25,6 +25,12 @@ jobs:
           ref: preview-site
           fetch-depth: 1
 
+      - name: Build catalog under /catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ops/build-catalog.sh
+
       - name: Validate preview source
         shell: bash
         run: |
@@ -33,6 +39,8 @@ jobs:
           test -s site/robots.txt
           test -s site/sitemap.xml
           test -s site/404.html
+          test -s site/catalog/index.html
+          test -d site/catalog/assets/pages
           bash -n ops/hidden-doors-website-root.sh
 
       - name: Deploy isolated VPN preview
