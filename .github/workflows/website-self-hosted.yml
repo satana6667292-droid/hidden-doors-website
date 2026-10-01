@@ -45,7 +45,7 @@ jobs:
           echo "Workspace: $GITHUB_WORKSPACE"
 
       - name: Checkout website repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ inputs.operation == 'deploy-preview' && inputs.ref || github.ref }}
           fetch-depth: 1
