@@ -98,7 +98,11 @@ function ensureHoneypot(){let input=form.elements.website;if(input)return input;
 function ensureCompany(){let input=form.elements.company;if(input)return input;const label=document.createElement('label');label.id='company-label';label.textContent='Компания / салон';input=document.createElement('input');input.name='company';input.autocomplete='organization';input.placeholder='Название компании';input.maxLength=150;label.append(input);const construction=$('#construction-label');construction.parentNode.insertBefore(label,construction);return input}
 function ensurePrivacyConsent(){
   let wrap=form.querySelector('.privacy-consent');
-  if(wrap)return wrap;
+  if(wrap){
+    const input=wrap.querySelector('input[type="checkbox"]');
+    if(input)input.checked=true;
+    return wrap;
+  }
   wrap=document.createElement('label');
   wrap.className='privacy-consent';
   const input=document.createElement('input');
@@ -106,6 +110,8 @@ function ensurePrivacyConsent(){
   input.name='privacy_consent';
   input.value='yes';
   input.required=true;
+  input.defaultChecked=true;
+  input.checked=true;
   const copy=document.createElement('span');
   copy.append('Я даю ');
   const consent=document.createElement('a');
