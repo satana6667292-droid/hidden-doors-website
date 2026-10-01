@@ -1,161 +1,207 @@
-# Перенос hidden-doors.ru с GitHub Pages на VPS
+# Перенос hidden-doors.ru на hiplet-91815
 
-Дата подготовки: 2026-09-30.
+Дата актуализации: 2026-10-01.
 
 ## Проверенный сервер
 
 Целевой VPS:
 
-- host: `hiplet-127827`;
-- IPv4: `185.161.69.253`;
-- Ubuntu 24.04;
-- web server: Nginx 1.24;
-- Caddy не установлен;
-- 80/443 уже обслуживаются Nginx;
-- UFW разрешает 22/80/443;
-- Certbot установлен, timer активен;
-- Docker не установлен.
+- host: `hiplet-91815`;
+- IPv4: `138.124.69.108`;
+- Ubuntu 24.04.5 LTS;
+- 4 vCPU;
+- 7.8 GiB RAM;
+- 77 GiB диск, около 50 GiB свободно;
+- Docker 29.8;
+- общий reverse proxy: Caddy 2.11.4 в контейнере `deploy-reverse-proxy-1`;
+- Caddy импортирует `/data/runtime/*.caddy`;
+- production app и PostgreSQL уже работают в Docker;
+- на сервере уже есть два self-hosted GitHub Actions runner.
 
-Основной сайт добавляется как отдельный Nginx virtual host и не должен менять существующие upstream-сервисы на 127.0.0.1:8787 и 127.0.0.1:8788.
+Корпоративный сайт размещается как отдельный статический Docker-контейнер и отдельная Docker-сеть. Production app, PostgreSQL, configurator, staging и preview-контейнеры не пересоздаются.
 
-## Схема публикации
+## Целевая схема
 
 ```
-GitHub main
-  -> GitHub Actions
-  -> /srv/hidden-doors/releases/<git-sha>
-  -> /srv/hidden-doors/current
-  -> Nginx
-  -> hidden-doors.ru
+GitHub repository
+   ↓
+dedicated self-hosted runner
+   ↓
+root-owned wrapper
+   ↓
+Docker image hidden-doors-website:<sha>
+   ↓
+container hidden-doors-website :8080
+   ↓
+network hidden-doors-website-net
+   ↓
+shared production Caddy
+   ↓
+hidden-doors.ru
 ```
 
-Публикация атомарная: новый релиз загружается в отдельный каталог, после проверки `index.html` переключается симлинк `current`. Хранятся пять последних релизов.
+## Безопасность
 
-## Файлы миграции
+Runner не получает прямой доступ к Docker socket.
 
-- `.github/workflows/deploy-to-vps.yml` — ручной deploy на VPS;
-- `ops/nginx/hidden-doors.bootstrap.conf` — HTTP-only bootstrap до выпуска сертификата;
-- `ops/nginx/hidden-doors.conf` — финальный HTTPS virtual host;
-- `ops/server-preflight.sh` — подготовка `/srv/hidden-doors`.
+Единственная разрешённая privileged-команда:
 
-Текущий GitHub Pages workflow пока не изменяется. До DNS cutover он остаётся резервным вариантом.
+```
+sudo /usr/local/sbin/hidden-doors-website ...
+```
 
-## GitHub Secrets
+Root-owned wrapper:
 
-Перед первым deploy добавить:
+- проверяет Git origin и commit SHA runner workspace;
+- проверяет health production app/PostgreSQL/Caddy до и после операции;
+- меняет только контейнер корпоративного сайта;
+- пишет только свой Caddy runtime-файл;
+- валидирует Caddy перед reload;
+- восстанавливает предыдущий runtime route при ошибке;
+- сохраняет предыдущий image как `hidden-doors-website:rollback`.
 
-- `PROD_SSH_HOST=185.161.69.253`;
-- `PROD_SSH_PORT=22`;
-- `PROD_SSH_USER` — отдельный deploy user;
-- `PROD_SSH_PRIVATE_KEY`;
-- `PROD_SSH_KNOWN_HOSTS`;
-- `PROD_HEALTHCHECK_URL` — необязательно, лучше добавить уже после DNS cutover.
+## Файлы
 
-## Подготовка сервера
+- `ops/website/Dockerfile` — статический image сайта;
+- `ops/website/nginx.conf` — внутренний web server на 8080;
+- `ops/hidden-doors-website-root.sh` — root-owned deploy wrapper;
+- `ops/sudoers.hidden-doors-website` — минимальное sudo-правило;
+- `.github/workflows/website-self-hosted.yml` — ручной workflow.
 
-1. Создать отдельного deploy user без root-доступа.
-2. Добавить публичный SSH-ключ в его `authorized_keys`.
-3. Выполнить от root:
+GitHub Pages workflow пока сохраняется как rollback до успешного DNS cutover.
+
+## Отдельный runner
+
+Рекомендуется создать третий runner только для `hidden-doors-website`.
+
+Пользователь:
+
+```
+website-runner
+```
+
+Runner directory:
+
+```
+/opt/actions-runner-website
+```
+
+Required label:
+
+```
+hidden-doors-website
+```
+
+Не добавлять `website-runner` в группу `docker`.
+
+После регистрации runner установить root wrapper:
 
 ```bash
-sudo bash ops/server-preflight.sh <deploy-user>
+install -o root -g root -m 0755 ops/hidden-doors-website-root.sh /usr/local/sbin/hidden-doors-website
+install -o root -g root -m 0440 ops/sudoers.hidden-doors-website /etc/sudoers.d/hidden-doors-website
+visudo -cf /etc/sudoers.d/hidden-doors-website
 ```
 
-4. Проверить права на `/srv/hidden-doors/releases`.
-5. Выполнить первый ручной GitHub Actions deploy.
-6. Проверить наличие:
-
-```
-/srv/hidden-doors/releases/<sha>/index.html
-/srv/hidden-doors/current
-```
-
-## Bootstrap Nginx до DNS cutover
-
-Скопировать `ops/nginx/hidden-doors.bootstrap.conf` в:
-
-```
-/etc/nginx/sites-available/hidden-doors
-```
-
-Затем создать symlink:
+Проверка от `website-runner`:
 
 ```bash
-ln -s /etc/nginx/sites-available/hidden-doors /etc/nginx/sites-enabled/hidden-doors
-nginx -t
-systemctl reload nginx
+sudo -n /usr/local/sbin/hidden-doors-website status
 ```
 
-Это не требует сертификата и безопасно до переключения DNS.
+## Этап 1 — preview без изменения DNS
 
-Локальная проверка на VPS:
+В GitHub Actions:
 
-```bash
-curl -I -H 'Host: hidden-doors.ru' http://127.0.0.1/
-curl -I -H 'Host: hidden-doors.ru' http://127.0.0.1/robots.txt
+```
+Hidden Doors website (hiplet-91815)
+operation = deploy-preview
+ref = main
 ```
 
-## DNS cutover
+Wrapper:
 
-После успешного server-side теста изменить только записи корневого сайта:
+1. проверяет production stack;
+2. строит новый image;
+3. создаёт изолированную сеть `hidden-doors-website-net`;
+4. подключает к ней production Caddy;
+5. запускает только `hidden-doors-website`;
+6. ждёт health check;
+7. создаёт route:
 
-- `hidden-doors.ru` -> A `185.161.69.253`;
-- `www.hidden-doors.ru` -> CNAME `hidden-doors.ru` либо A `185.161.69.253`.
+```
+https://hidden-doors-site.138.124.69.108.sslip.io/
+```
 
-Не менять:
+DNS `hidden-doors.ru` при этом не меняется.
+
+На preview проверяются:
+
+- главная;
+- все основные разделы;
+- CSS/JS/assets;
+- формы;
+- `robots.txt`;
+- `sitemap.xml`;
+- фирменная 404;
+- мобильная версия;
+- кабинет дилера;
+- метрика.
+
+## Этап 2 — DNS cutover
+
+Только после полной проверки preview:
+
+- `hidden-doors.ru` A -> `138.124.69.108`;
+- `www.hidden-doors.ru` CNAME -> `hidden-doors.ru` либо A -> `138.124.69.108`.
+
+Не менять DNS:
 
 - `catalog.hidden-doors.ru`;
 - `shop.hidden-doors.ru`;
 - `info.hidden-doors.ru`;
 - `lk.hidden-doors.ru`.
 
-Дождаться, пока публичные резолверы начнут отдавать `185.161.69.253`.
+## Этап 3 — production route
 
-## Выпуск TLS
-
-После распространения DNS:
-
-```bash
-certbot certonly --webroot   -w /srv/hidden-doors/current   -d hidden-doors.ru   -d www.hidden-doors.ru
-```
-
-Проверить:
-
-```bash
-certbot certificates
-test -s /etc/letsencrypt/live/hidden-doors.ru/fullchain.pem
-test -s /etc/letsencrypt/live/hidden-doors.ru/privkey.pem
-```
-
-## Переход на финальный HTTPS virtual host
-
-После успешного выпуска сертификата заменить содержимое:
+После того как публичный DNS уже указывает на `138.124.69.108`:
 
 ```
-/etc/nginx/sites-available/hidden-doors
+operation = promote-production
+confirm_production = PRODUCTION
 ```
 
-на `ops/nginx/hidden-doors.conf`, затем:
+Wrapper создаёт Caddy route для:
 
-```bash
-nginx -t && systemctl reload nginx
+- `hidden-doors.ru`;
+- `www.hidden-doors.ru`.
+
+Caddy получает HTTPS автоматически из существующего production reverse proxy.
+
+## Rollback
+
+### Контент
+
+GitHub Actions:
+
+```
+operation = rollback
 ```
 
-Используется именно reload, не stop/start.
+Запускается предыдущий image `hidden-doors-website:rollback`. Caddy route не меняется.
 
-## Контроль
+### DNS
 
-- `https://hidden-doors.ru/` -> 200;
-- `http://hidden-doors.ru/` -> HTTPS;
-- `https://www.hidden-doors.ru/` -> redirect на основной host;
-- `/hiddendoors` и `/hiddendoors/` -> 301 на `/hidden-doors/`;
-- `/robots.txt` -> 200;
-- `/sitemap.xml` -> 200;
-- неизвестный URL -> фирменная `404.html`;
-- существующие Bitrix MCP и Telegram endpoints остаются доступны.
+Пока GitHub Pages не отключён, аварийный внешний rollback — вернуть прежние GitHub Pages A/CNAME.
 
-## Откат
+## Что не делать до cutover
 
-До отключения GitHub Pages быстрый DNS rollback — вернуть прежние GitHub Pages A/CNAME записи.
+- не отключать GitHub Pages;
+- не удалять `site/CNAME`;
+- не менять DNS корневого домена;
+- не изменять production Caddyfile вручную;
+- не подключать runner к Docker group;
+- не выполнять `docker system prune -a`.
 
-На VPS откат контента — переключить `/srv/hidden-doors/current` на предыдущий каталог в `/srv/hidden-doors/releases/`.
+## Отдельно про место на диске
+
+На сервере достаточно места, но Docker сейчас содержит заметный объём старых images/build cache. Перед миграцией можно выполнить отдельную безопасную уборку только после проверки, какие images нужны rollback/staging. Это не является обязательным условием переноса сайта.

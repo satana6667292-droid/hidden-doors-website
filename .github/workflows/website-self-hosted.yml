@@ -1,0 +1,119 @@
+name: Hidden Doors website (hiplet-91815)
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Website operation
+        required: true
+        default: status
+        type: choice
+        options:
+          - status
+          - deploy-preview
+          - promote-production
+          - rollback
+      ref:
+        description: Git ref to deploy for deploy-preview
+        required: false
+        default: main
+        type: string
+      confirm_production:
+        description: Type PRODUCTION only for promote-production
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hidden-doors-website-hiplet-91815
+  cancel-in-progress: false
+
+jobs:
+  website:
+    runs-on: [self-hosted, Linux, X64, hidden-doors-website]
+    timeout-minutes: 30
+
+    steps:
+      - name: Runner identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Host: $(hostname)"
+          id
+          echo "Workspace: $GITHUB_WORKSPACE"
+
+      - name: Checkout website repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.operation == 'deploy-preview' && inputs.ref || github.ref }}
+          fetch-depth: 1
+
+      - name: Validate website source
+        if: ${{ inputs.operation == 'deploy-preview' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s site/index.html
+          test -s site/robots.txt
+          test -s site/sitemap.xml
+          test -s site/404.html
+          grep -Fq 'https://hidden-doors.ru/sitemap.xml' site/robots.txt
+          grep -Fq 'https://hidden-doors.ru/' site/sitemap.xml
+          bash -n ops/hidden-doors-website-root.sh
+
+          if grep -RIlE 'chatgpt\.site|satana6667292-droid\.github\.io' site \
+            --include='*.html' --include='*.js' --include='*.css' --include='*.xml' --include='*.txt'; then
+            echo 'Preview/GitHub Pages URL found inside production site.'
+            exit 1
+          fi
+
+      - name: Status
+        if: ${{ inputs.operation == 'status' }}
+        shell: bash
+        run: sudo -n /usr/local/sbin/hidden-doors-website status
+
+      - name: Deploy preview
+        if: ${{ inputs.operation == 'deploy-preview' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          sudo -n /usr/local/sbin/hidden-doors-website deploy-preview "$GITHUB_WORKSPACE" "$SHA"
+
+      - name: Guard production promotion
+        if: ${{ inputs.operation == 'promote-production' }}
+        shell: bash
+        env:
+          CONFIRM: ${{ inputs.confirm_production }}
+        run: |
+          set -euo pipefail
+          [[ "$CONFIRM" == "PRODUCTION" ]] || {
+            echo "Promotion cancelled: confirm_production must equal PRODUCTION."
+            exit 1
+          }
+
+      - name: Promote production route
+        if: ${{ inputs.operation == 'promote-production' }}
+        shell: bash
+        run: sudo -n /usr/local/sbin/hidden-doors-website promote-production PRODUCTION
+
+      - name: Roll back website container
+        if: ${{ inputs.operation == 'rollback' }}
+        shell: bash
+        run: sudo -n /usr/local/sbin/hidden-doors-website rollback
+
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Hidden Doors website"
+            echo
+            echo "Operation: ${{ inputs.operation }}"
+            echo "Runner host: $(hostname)"
+            echo
+            echo "Preview: https://hidden-doors-site.138.124.69.108.sslip.io/"
+            echo "Production: https://hidden-doors.ru/"
+          } >> "$GITHUB_STEP_SUMMARY"
