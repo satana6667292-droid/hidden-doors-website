@@ -9,6 +9,7 @@ NETWORK_ALIAS="hidden-doors-website"
 PREVIEW_HOST="hidden-doors-site.138.124.69.108.sslip.io"
 PRODUCTION_HOST="hidden-doors.ru"
 WWW_HOST="www.hidden-doors.ru"
+SERVER_IP="138.124.69.108"
 
 CADDY_RUNTIME_FILE="/data/runtime/hidden-doors-website.caddy"
 LOCK_FILE="/var/lock/hidden-doors-website.lock"
@@ -23,7 +24,10 @@ acquire_lock(){
 
 production_container(){
   local service="$1"
-  docker ps --filter "label=com.docker.compose.service=$service" --format '{{.ID}}' | head -n1
+  local short
+  short="$(docker ps --filter "label=com.docker.compose.service=$service" --format '{{.ID}}' | head -n1)"
+  [[ -n "$short" ]] || return 0
+  docker inspect --format '{{.Id}}' "$short" 2>/dev/null || true
 }
 
 container_health(){
@@ -198,12 +202,10 @@ run_site_container(){
   docker run -d \
     --name "$CONTAINER" \
     --restart unless-stopped \
-    --read-only \
-    --tmpfs /var/cache/nginx:size=16m,mode=0755 \
-    --tmpfs /var/run:size=4m,mode=0755 \
-    --tmpfs /tmp:size=8m,mode=1777 \
     --cap-drop ALL \
-    --cap-add NET_BIND_SERVICE \
+    --cap-add CHOWN \
+    --cap-add SETGID \
+    --cap-add SETUID \
     --security-opt no-new-privileges:true \
     --memory 128m \
     --cpus 0.50 \
@@ -270,6 +272,11 @@ deploy_preview(){
 promote_production(){
   local confirmation="${1:-}"
   [[ "$confirmation" == "PRODUCTION" ]] || die "Explicit PRODUCTION confirmation required."
+
+  getent ahostsv4 "$PRODUCTION_HOST" | awk '{print $1}' | grep -Fxq "$SERVER_IP" \
+    || die "$PRODUCTION_HOST does not resolve to $SERVER_IP yet."
+  getent ahostsv4 "$WWW_HOST" | awk '{print $1}' | grep -Fxq "$SERVER_IP" \
+    || die "$WWW_HOST does not resolve to $SERVER_IP yet."
 
   local prod_app prod_db proxy
   prod_app="$(production_container app)"
