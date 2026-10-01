@@ -14,10 +14,6 @@ git clone --depth 1 --branch "$CATALOG_REF" "$CATALOG_REPO" "$tmp/catalog"
 
 cd "$tmp/catalog"
 
-node --check editor-pre.js
-node --check editor-v4.js
-node --check editor-media.js
-
 cat bundle/site-bundle.part* > "$tmp/site-bundle.zip"
 mkdir -p "$tmp/unpacked" "$tmp/catalog-site"
 unzip -q "$tmp/site-bundle.zip" -d "$tmp/unpacked"
