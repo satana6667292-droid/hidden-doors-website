@@ -2,9 +2,11 @@
 set -Eeuo pipefail
 
 CONTAINER="hidden-doors-website"
+PREVIEW_CONTAINER="hidden-doors-website-preview"
 IMAGE_REPO="hidden-doors-website"
 NETWORK="hidden-doors-website-net"
 NETWORK_ALIAS="hidden-doors-website"
+PREVIEW_NETWORK_ALIAS="hidden-doors-website-preview"
 
 PREVIEW_HOST="hidden-doors-site.138.124.69.108.sslip.io"
 PRODUCTION_HOST="hidden-doors.ru"
@@ -13,6 +15,7 @@ SERVER_IP="138.124.69.108"
 VPN_ALLOWED_IP="5.183.253.169"
 
 CADDY_RUNTIME_FILE="/data/runtime/hidden-doors-website.caddy"
+PREVIEW_CADDY_RUNTIME_FILE="/data/runtime/hidden-doors-website-preview.caddy"
 LOCK_FILE="/var/lock/hidden-doors-website.lock"
 
 log(){ printf '\n[%s] %s\n' "$(date -Is)" "$*"; }
@@ -202,6 +205,112 @@ EOF
   rm -f "$old_file"
 }
 
+write_preview_route(){
+  local proxy="$1"
+  local old_file
+  old_file="$(mktemp)"
+
+  if docker exec "$proxy" sh -lc "test -f '$PREVIEW_CADDY_RUNTIME_FILE' && cat '$PREVIEW_CADDY_RUNTIME_FILE'" >"$old_file" 2>/dev/null; then
+    :
+  else
+    : >"$old_file"
+  fi
+
+  assert_runtime_import "$proxy"
+
+  docker exec -i "$proxy" sh -lc "umask 077; mkdir -p /data/runtime; cat > '$PREVIEW_CADDY_RUNTIME_FILE'" <<EOF
+$PREVIEW_HOST {
+  encode zstd gzip
+
+  @vpn remote_ip $VPN_ALLOWED_IP
+  handle @vpn {
+    reverse_proxy $PREVIEW_NETWORK_ALIAS:8080
+  }
+
+  handle {
+    respond "Forbidden" 403
+  }
+
+  header {
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+    X-Frame-Options SAMEORIGIN
+    -Server
+  }
+
+  log {
+    output file /data/hidden-doors-website-preview-access.log {
+      roll_size 5MB
+      roll_keep 3
+    }
+  }
+}
+EOF
+
+  if ! docker exec "$proxy" caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile; then
+    log "Caddy preview validation failed; restoring previous preview route."
+    if [[ -s "$old_file" ]]; then
+      docker exec -i "$proxy" sh -lc "cat > '$PREVIEW_CADDY_RUNTIME_FILE'" <"$old_file"
+    else
+      docker exec "$proxy" rm -f "$PREVIEW_CADDY_RUNTIME_FILE" || true
+    fi
+    rm -f "$old_file"
+    die "Caddy preview validation failed."
+  fi
+
+  if ! docker exec "$proxy" caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile; then
+    log "Caddy preview reload failed; restoring previous preview route."
+    if [[ -s "$old_file" ]]; then
+      docker exec -i "$proxy" sh -lc "cat > '$PREVIEW_CADDY_RUNTIME_FILE'" <"$old_file"
+    else
+      docker exec "$proxy" rm -f "$PREVIEW_CADDY_RUNTIME_FILE" || true
+    fi
+    docker exec "$proxy" caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile || true
+    rm -f "$old_file"
+    die "Caddy preview reload failed."
+  fi
+
+  rm -f "$old_file"
+}
+
+run_preview_container(){
+  local image="$1"
+
+  docker rm -f "$PREVIEW_CONTAINER" >/dev/null 2>&1 || true
+
+  docker run -d \
+    --name "$PREVIEW_CONTAINER" \
+    --restart unless-stopped \
+    --cap-drop ALL \
+    --cap-add CHOWN \
+    --cap-add SETGID \
+    --cap-add SETUID \
+    --security-opt no-new-privileges:true \
+    --memory 128m \
+    --cpus 0.50 \
+    --pids-limit 96 \
+    --log-driver json-file \
+    --log-opt max-size=5m \
+    --log-opt max-file=3 \
+    --network "$NETWORK" \
+    --network-alias "$PREVIEW_NETWORK_ALIAS" \
+    "$image" >/dev/null
+}
+
+wait_preview_healthy(){
+  for _ in $(seq 1 45); do
+    case "$(container_health "$PREVIEW_CONTAINER")" in
+      healthy) return 0;;
+      unhealthy|exited|dead)
+        docker logs --tail 120 "$PREVIEW_CONTAINER" || true
+        return 1
+        ;;
+    esac
+    sleep 2
+  done
+  return 1
+}
+
 run_site_container(){
   local image="$1"
 
@@ -245,38 +354,37 @@ deploy_preview(){
   docker network inspect "$NETWORK" --format '{{json .Containers}}' | grep -q "$proxy" \
     || die "Production Caddy could not be attached to website network."
 
-  if docker inspect "$CONTAINER" >/dev/null 2>&1; then
-    old_image="$(docker inspect --format '{{.Image}}' "$CONTAINER")"
-    docker tag "$old_image" "$IMAGE_REPO:rollback"
+  if docker inspect "$PREVIEW_CONTAINER" >/dev/null 2>&1; then
+    old_preview_image="$(docker inspect --format '{{.Image}}' "$PREVIEW_CONTAINER")"
+    docker tag "$old_preview_image" "$IMAGE_REPO:preview-rollback"
   fi
 
-  log "Building corporate website image from $expected_sha"
+  log "Building isolated corporate website preview from $expected_sha"
   docker build \
     --label com.hidden-doors.service=corporate-website \
     -t "$IMAGE_REPO:${expected_sha:0:12}" \
-    -t "$IMAGE_REPO:latest" \
+    -t "$IMAGE_REPO:preview-latest" \
     -f "$source_dir/ops/website/Dockerfile" \
     "$source_dir"
 
-  run_site_container "$IMAGE_REPO:${expected_sha:0:12}"
+  run_preview_container "$IMAGE_REPO:${expected_sha:0:12}"
 
-  if ! wait_healthy; then
-    docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
-    if docker image inspect "$IMAGE_REPO:rollback" >/dev/null 2>&1; then
-      log "Restoring rollback image."
-      run_site_container "$IMAGE_REPO:rollback"
-      wait_healthy || true
+  if ! wait_preview_healthy; then
+    docker rm -f "$PREVIEW_CONTAINER" >/dev/null 2>&1 || true
+    if docker image inspect "$IMAGE_REPO:preview-rollback" >/dev/null 2>&1; then
+      log "Restoring previous preview image."
+      run_preview_container "$IMAGE_REPO:preview-rollback"
+      wait_preview_healthy || true
     fi
-    die "New website container failed its health check."
+    die "New preview container failed its health check."
   fi
 
   assert_core_stack "$prod_app" "$prod_db" "$proxy"
-  write_route preview "$proxy"
+  write_preview_route "$proxy"
   assert_core_stack "$prod_app" "$prod_db" "$proxy"
 
-  log "Preview ready: https://$PREVIEW_HOST/"
+  log "Isolated preview ready: https://$PREVIEW_HOST/"
 }
-
 public_dns_matches(){
   local host="$1"
   local resolver
@@ -302,16 +410,37 @@ promote_production(){
   assert_core_stack "$prod_app" "$prod_db" "$proxy"
 
   acquire_lock
-  [[ "$(container_health "$CONTAINER")" == "healthy" ]] || die "Website container is not healthy."
+  [[ "$(container_health "$PREVIEW_CONTAINER")" == "healthy" ]] \
+    || die "Preview container is not healthy. Deploy and verify preview before promotion."
+
   ensure_network
   docker network connect "$NETWORK" "$proxy" >/dev/null 2>&1 || true
 
+  candidate_image="$(docker inspect --format '{{.Image}}' "$PREVIEW_CONTAINER")"
+
+  if docker inspect "$CONTAINER" >/dev/null 2>&1; then
+    old_image="$(docker inspect --format '{{.Image}}' "$CONTAINER")"
+    docker tag "$old_image" "$IMAGE_REPO:rollback"
+  fi
+
+  run_site_container "$candidate_image"
+
+  if ! wait_healthy; then
+    docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+    if docker image inspect "$IMAGE_REPO:rollback" >/dev/null 2>&1; then
+      log "Production candidate failed; restoring rollback image."
+      run_site_container "$IMAGE_REPO:rollback"
+      wait_healthy || true
+    fi
+    die "Production candidate failed its health check."
+  fi
+
+  assert_core_stack "$prod_app" "$prod_db" "$proxy"
   write_route production "$proxy"
   assert_core_stack "$prod_app" "$prod_db" "$proxy"
 
-  log "Production route enabled for $PRODUCTION_HOST and $WWW_HOST."
+  log "Verified preview image promoted to $PRODUCTION_HOST and $WWW_HOST."
 }
-
 rollback(){
   local prod_app prod_db proxy
   prod_app="$(production_container app)"
@@ -345,7 +474,8 @@ status(){
   proxy="$(production_container reverse-proxy)"
 
   echo "Hidden Doors corporate website status"
-  echo "Website container: $(container_health "$CONTAINER")"
+  echo "Production website container: $(container_health "$CONTAINER")"
+  echo "Preview website container: $(container_health "$PREVIEW_CONTAINER")"
   echo "Preview: https://$PREVIEW_HOST/"
   echo "Production: https://$PRODUCTION_HOST/"
   echo "Production app: $(container_health "$prod_app")"
