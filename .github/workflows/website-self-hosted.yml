@@ -1,6 +1,8 @@
 name: Hidden Doors website (hiplet-91815)
 
 on:
+  push:
+    branches: [preview-site]
   workflow_dispatch:
     inputs:
       operation:
@@ -47,18 +49,18 @@ jobs:
       - name: Checkout website repository
         uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.operation == 'deploy-preview' && inputs.ref || github.ref }}
+          ref: ${{ github.event_name == 'push' && github.ref_name || (inputs.operation == 'deploy-preview' && inputs.ref || github.ref) }}
           fetch-depth: 1
 
       - name: Build web catalog under /catalog
-        if: ${{ inputs.operation == 'deploy-preview' }}
+        if: ${{ github.event_name == 'push' || inputs.operation == 'deploy-preview' }}
         shell: bash
         run: |
           set -euo pipefail
           bash ops/build-catalog.sh
 
       - name: Validate website source
-        if: ${{ inputs.operation == 'deploy-preview' }}
+        if: ${{ github.event_name == 'push' || inputs.operation == 'deploy-preview' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -84,7 +86,7 @@ jobs:
         run: sudo -n /usr/local/sbin/hidden-doors-website status
 
       - name: Deploy preview
-        if: ${{ inputs.operation == 'deploy-preview' }}
+        if: ${{ github.event_name == 'push' || inputs.operation == 'deploy-preview' }}
         shell: bash
         run: |
           set -euo pipefail
