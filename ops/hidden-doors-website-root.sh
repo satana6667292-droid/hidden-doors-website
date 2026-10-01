@@ -113,7 +113,15 @@ write_route(){
       docker exec -i "$proxy" sh -lc "umask 077; mkdir -p /data/runtime; cat > '$CADDY_RUNTIME_FILE'" <<EOF
 $PREVIEW_HOST {
   encode zstd gzip
-  reverse_proxy $NETWORK_ALIAS:8080
+
+  @vpn remote_ip 5.183.253.169
+  handle @vpn {
+    reverse_proxy $NETWORK_ALIAS:8080
+  }
+
+  handle {
+    respond "Forbidden" 403
+  }
 
   header {
     X-Content-Type-Options nosniff
