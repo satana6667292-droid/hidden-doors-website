@@ -24,7 +24,7 @@ cat page-overrides/page-028.b64.part* | base64 -d > "$tmp/page-028.webp"
 cp "$tmp/page-028.webp" "$tmp/catalog-site/assets/pages/page-028.webp"
 cp "$tmp/page-028.webp" "$tmp/catalog-site/assets/thumbs/page-028.webp"
 
-cp editor-pre.js editor-v4.js editor-media.js visual-fixes.js resolved-corrections.js "$tmp/catalog-site/"
+cp editor-pre.js editor-v4.js editor-media.js visual-fixes.js resolved-corrections.js public-view.js public-view.css "$tmp/catalog-site/"
 
 python3 - "$tmp/catalog-site/index.html" <<'PY'
 from pathlib import Path
@@ -38,6 +38,8 @@ inject='''<script src="editor-pre.js?v=site-master-1"></script>
   <script src="resolved-corrections.js?v=site-master-1"></script>
   <script src="editor-v4.js?v=site-master-1"></script>
   <script src="editor-media.js?v=site-master-1"></script>
+  <link rel="stylesheet" href="public-view.css?v=site-public-1">
+  <script src="public-view.js?v=site-public-1"></script>
   <script src="visual-fixes.js?v=site-master-1"></script>'''
 if needle not in s:
     raise SystemExit("Catalog index: app.js script tag not found")
