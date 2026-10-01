@@ -38,11 +38,17 @@ function applyLaunchCleanup(){
   document.querySelectorAll('.account[data-dialog="account"]').forEach(button=>{
     const a=document.createElement('a');
     a.className=button.className;
-    a.href='https://lk.hidden-doors.ru/';
+    a.href=TELEGRAM_URL;
     a.target='_blank';
     a.rel='noopener noreferrer';
     a.innerHTML='Кабинет дилера <span aria-hidden="true">↗</span>';
     button.replaceWith(a);
+  });
+
+  document.querySelectorAll('a.account').forEach(a=>{
+    a.href=TELEGRAM_URL;
+    a.target='_blank';
+    a.rel='noopener noreferrer';
   });
 
   const defaultSubmit=document.querySelector('#request-form [type="submit"]');
