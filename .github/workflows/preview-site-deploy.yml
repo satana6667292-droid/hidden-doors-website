@@ -31,6 +31,17 @@ jobs:
           set -euo pipefail
           bash ops/build-catalog.sh
 
+      - name: Freeze generated catalog snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "hidden-doors-preview"
+          git config user.email "preview@hidden-doors.local"
+          git add -f site/catalog
+          if ! git diff --cached --quiet; then
+            git commit -m "build: generated catalog snapshot"
+          fi
+
       - name: Validate preview source
         shell: bash
         run: |
