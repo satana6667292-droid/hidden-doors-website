@@ -1,0 +1,4 @@
+# Install as /etc/sudoers.d/hidden-doors-website
+# Validate with: visudo -cf /etc/sudoers.d/hidden-doors-website
+
+website-runner ALL=(root) NOPASSWD: /usr/local/sbin/hidden-doors-website
