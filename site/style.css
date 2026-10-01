@@ -82,3 +82,5 @@ nav{align-items:center}
 .legal-page ul{padding-left:22px}
 .legal-meta{font-size:13px!important;color:var(--muted)!important;margin-bottom:30px}
 .legal-card{background:var(--paper);padding:24px 28px;border-left:3px solid var(--green);margin:25px 0}
+
+.door-36-picture img{width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important;object-position:57% center!important;padding:0!important;background:transparent!important}
