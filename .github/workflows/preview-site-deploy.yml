@@ -1,0 +1,55 @@
+name: Preview site deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hidden-doors-website-preview
+  cancel-in-progress: false
+
+jobs:
+  deploy-preview:
+    runs-on: [self-hosted, Linux, X64, hidden-doors-website]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout preview branch
+        uses: actions/checkout@v5
+        with:
+          ref: preview-site
+          fetch-depth: 1
+
+      - name: Validate preview source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s site/index.html
+          test -s site/robots.txt
+          test -s site/sitemap.xml
+          test -s site/404.html
+          bash -n ops/hidden-doors-website-root.sh
+
+      - name: Deploy isolated VPN preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          sudo -n /usr/local/sbin/hidden-doors-website deploy-preview "$GITHUB_WORKSPACE" "$SHA"
+
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Hidden Doors preview"
+            echo
+            echo "Branch: preview-site"
+            echo "Commit: `$(git rev-parse --short HEAD)`"
+            echo
+            echo "Preview: https://hidden-doors-site.138.124.69.108.sslip.io/"
+            echo
+            echo "Production hidden-doors.ru was not modified."
+          } >> "$GITHUB_STEP_SUMMARY"
