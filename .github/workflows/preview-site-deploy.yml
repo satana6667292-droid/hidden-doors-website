@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: hidden-doors-website-preview
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy-preview:
