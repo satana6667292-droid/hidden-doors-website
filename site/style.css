@@ -84,3 +84,15 @@ nav{align-items:center}
 .legal-card{background:var(--paper);padding:24px 28px;border-left:3px solid var(--green);margin:25px 0}
 
 .door-36-picture img{width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important;object-position:57% center!important;padding:0!important;background:transparent!important}
+
+@media(max-width:600px){
+  #request-dialog{padding:22px 18px;max-height:96dvh}
+  #request-dialog .eyebrow{margin:0 0 7px}
+  #request-dialog h2{font-size:26px;line-height:1.12;margin:8px 0 9px}
+  #request-dialog>p{font-size:13px;line-height:1.45;margin:0 0 12px}
+  #request-dialog form label{gap:4px;margin-bottom:10px}
+  #request-dialog input,#request-dialog select,#request-dialog textarea{padding:10px 11px}
+  #request-dialog textarea{min-height:72px}
+  #request-dialog .privacy-consent{margin:6px 0 10px!important;font-size:11px!important;line-height:1.35}
+  #request-dialog form .button{min-height:49px;margin-top:2px;padding-block:13px}
+}
