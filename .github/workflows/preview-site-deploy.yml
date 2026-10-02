@@ -29,24 +29,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash ops/build-catalog.sh 2>&1 | tee /tmp/catalog-build.log
-
-      - name: Upload catalog build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: catalog-build-log
-          path: /tmp/catalog-build.log
-          if-no-files-found: ignore
-          retention-days: 1
-
-      - name: Upload folio verification pages
-        uses: actions/upload-artifact@v4
-        with:
-          name: folio-verification-pages
-          path: site/catalog/assets/pages/*.webp
-          if-no-files-found: error
-          retention-days: 1
+          bash ops/build-catalog.sh
 
 
       - name: Freeze generated catalog snapshot
