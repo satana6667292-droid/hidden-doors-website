@@ -20,7 +20,7 @@ unzip -q "$tmp/site-bundle.zip" -d "$tmp/unpacked"
 cp -a "$tmp/unpacked/hidden-doors-catalog-2026-site/." "$tmp/catalog-site/"
 
 # Approved/corrected catalog page assets.
-for n in 002 003 028 032; do
+for n in 002 003 004 005 028 032; do
   cat page-overrides/page-${n}.b64.part* | base64 -d > "$tmp/page-${n}.webp"
   cp "$tmp/page-${n}.webp" "$tmp/catalog-site/assets/pages/page-${n}.webp"
   cp "$tmp/page-${n}.webp" "$tmp/catalog-site/assets/thumbs/page-${n}.webp"
