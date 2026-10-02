@@ -31,7 +31,8 @@ done
 # Bake the approved FOLIO MASTER v1 directly into generated raster assets.
 # This removes all historical embedded numbers first, then writes exactly one final folio.
 if ! python3 -c "import PIL" >/dev/null 2>&1; then
-  python3 -m pip install --quiet --user Pillow
+  echo "Pillow not present; installing for folio baking..."
+  python3 -m pip install --break-system-packages Pillow
 fi
 python3 "$tmp/catalog/scripts/bake_folio_master.py" \
   --site "$tmp/catalog-site" \
