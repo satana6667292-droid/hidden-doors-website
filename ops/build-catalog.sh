@@ -4,7 +4,7 @@ set -euo pipefail
 CATALOG_REPO="${CATALOG_REPO:-https://github.com/satana6667292-droid/hidden-doors-catalog-2026.git}"
 CATALOG_REF="${CATALOG_REF:-main}"
 DEST="${CATALOG_DEST:-site/catalog}"
-# Catalog public master: master19
+# Catalog public master: master20
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
