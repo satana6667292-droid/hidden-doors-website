@@ -30,11 +30,20 @@ done
 
 # Bake the approved FOLIO MASTER v1 directly into generated raster assets.
 # This removes all historical embedded numbers first, then writes exactly one final folio.
+FOLIO_PYTHON=python3
 if ! python3 -c "import PIL" >/dev/null 2>&1; then
-  echo "Pillow not present; installing for folio baking..."
-  python3 -m pip install --break-system-packages Pillow
+  echo "Pillow not present; preparing isolated folio environment..."
+  if python3 -m venv "$tmp/folio-venv" >/dev/null 2>&1; then
+    "$tmp/folio-venv/bin/pip" install --quiet Pillow
+    FOLIO_PYTHON="$tmp/folio-venv/bin/python"
+  else
+    echo "python3-venv unavailable; bootstrapping pip in the runner user environment..."
+    curl -fsSL https://bootstrap.pypa.io/get-pip.py -o "$tmp/get-pip.py"
+    python3 "$tmp/get-pip.py" --user --break-system-packages
+    python3 -m pip install --quiet --user --break-system-packages Pillow
+  fi
 fi
-python3 "$tmp/catalog/scripts/bake_folio_master.py" \
+"$FOLIO_PYTHON" "$tmp/catalog/scripts/bake_folio_master.py" \
   --site "$tmp/catalog-site" \
   --font "$WORKTREE_ROOT/site/assets/manrope-600.ttf"
 
