@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+WORKTREE_ROOT="$(pwd)"
+
 CATALOG_REPO="${CATALOG_REPO:-https://github.com/satana6667292-droid/hidden-doors-catalog-2026.git}"
 CATALOG_REF="${CATALOG_REF:-main}"
 DEST="${CATALOG_DEST:-site/catalog}"
-# Catalog public master: master20
+# Catalog public master: master21
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -25,6 +27,15 @@ for n in 002 003 004 005 028 032; do
   cp "$tmp/page-${n}.webp" "$tmp/catalog-site/assets/pages/page-${n}.webp"
   cp "$tmp/page-${n}.webp" "$tmp/catalog-site/assets/thumbs/page-${n}.webp"
 done
+
+# Bake the approved FOLIO MASTER v1 directly into generated raster assets.
+# This removes all historical embedded numbers first, then writes exactly one final folio.
+if ! python3 -c "import PIL" >/dev/null 2>&1; then
+  python3 -m pip install --quiet --user Pillow
+fi
+python3 "$tmp/catalog/scripts/bake_folio_master.py" \
+  --site "$tmp/catalog-site" \
+  --font "$WORKTREE_ROOT/site/assets/manrope-600.ttf"
 
 # The original catalog app is internal editor only.
 cp "$tmp/catalog-site/index.html" "$tmp/catalog-site/editor.html"
