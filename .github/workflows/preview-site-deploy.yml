@@ -44,15 +44,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: folio-verification-pages
-          path: |
-            site/catalog/assets/pages/page-002.webp
-            site/catalog/assets/pages/page-003.webp
-            site/catalog/assets/pages/page-004.webp
-            site/catalog/assets/pages/page-007.webp
-            site/catalog/assets/pages/page-008.webp
-            site/catalog/assets/pages/page-027.webp
-            site/catalog/assets/pages/page-028.webp
-            site/catalog/assets/pages/page-040.webp
+          path: site/catalog/assets/pages/*.webp
           if-no-files-found: error
           retention-days: 1
 
