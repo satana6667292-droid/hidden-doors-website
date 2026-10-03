@@ -31,6 +31,14 @@ jobs:
           set -euo pipefail
           bash ops/build-catalog.sh
 
+      - name: Assemble dealer hero asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat site/assets/.dealer-hero-b64/part*.txt | tr -d '\n' | base64 -d > site/assets/dealers-office-consultation.avif
+          test -s site/assets/dealers-office-consultation.avif
+          echo "0962c0bff108c8b1ea23770441f1a77f438b2599017ca103adc4f260fd4bea4a  site/assets/dealers-office-consultation.avif" | sha256sum -c -
+          rm -rf site/assets/.dealer-hero-b64
 
       - name: Freeze generated catalog snapshot
         shell: bash
