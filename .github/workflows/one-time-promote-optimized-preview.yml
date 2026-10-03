@@ -1,0 +1,38 @@
+name: One-time promote optimized preview to production
+
+on:
+  push:
+    branches:
+      - ops/promote-optimized-preview-2026-10-03
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hidden-doors-website-production-promotion
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: [self-hosted, Linux, X64, hidden-doors-website]
+    timeout-minutes: 10
+    steps:
+      - name: Status before promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n /usr/local/sbin/hidden-doors-website status
+
+      - name: Promote approved optimized preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n /usr/local/sbin/hidden-doors-website promote-production PRODUCTION
+
+      - name: Verify production
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n /usr/local/sbin/hidden-doors-website status
+          curl -fsS --max-time 20 https://hidden-doors.ru/ >/dev/null
+          echo "Production URL responds successfully."
