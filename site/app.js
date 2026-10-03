@@ -211,8 +211,132 @@ form.elements.phone.addEventListener('paste',e=>{e.preventDefault();let digits=(
 form.elements.phone.addEventListener('focus',e=>{if(!e.target.value.startsWith('+7'))e.target.value='+7'});
 const doorsToggle=$('.doors-toggle'),doorsMenu=$('#doors-submenu');
 if(doorsToggle&&doorsMenu){doorsToggle.onclick=()=>{const expanded=doorsToggle.getAttribute('aria-expanded')==='true';doorsToggle.setAttribute('aria-expanded',String(!expanded));doorsMenu.hidden=expanded};document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!doorsMenu.hidden){doorsMenu.hidden=true;doorsToggle.setAttribute('aria-expanded','false');doorsToggle.focus()}});document.addEventListener('click',e=>{if(!e.target.closest('.nav-doors')){doorsMenu.hidden=true;doorsToggle.setAttribute('aria-expanded','false')}})}
-const parallaxImage=$('[data-parallax="hero"]');
-if(parallaxImage){const reduced=matchMedia('(prefers-reduced-motion: reduce)'),desktop=matchMedia('(min-width: 901px)'),hero=parallaxImage.closest('.hero');let scheduled=false;const update=()=>{scheduled=false;if(reduced.matches||!desktop.matches){parallaxImage.style.removeProperty('--parallax-y');return}const r=hero.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;const amount=Math.max(-22,Math.min(22,-r.top*.055));parallaxImage.style.setProperty('--parallax-y',amount+'px')};const queue=()=>{if(!scheduled){scheduled=true;requestAnimationFrame(update)}};addEventListener('scroll',queue,{passive:true});addEventListener('resize',queue,{passive:true});reduced.addEventListener('change',queue);desktop.addEventListener('change',queue);queue()}
+const heroSlider=$('[data-hero-slider]');
+if(heroSlider){
+  const heroSlides=[
+    {
+      eyebrow:'HIDDEN DOORS / ПРОИЗВОДИТЕЛЬ ДВЕРЕЙ',
+      title:'Межкомнатные и<br>скрытые двери<br><span>от производителя.</span>',
+      description:'Производим двери Hidden Doors в Тюмени. Подберём систему, размеры, открывание и отделку под ваш интерьер.',
+      primary:'Подобрать дверь',dialog:'calculate',model:'',
+      secondary:'Посмотреть системы',href:'#doors',
+      note:'Производство Hidden Doors · Тюмень · дилерская сеть по России',
+      caption:'Интерьерная визуализация'
+    },
+    {
+      eyebrow:'HIDDEN DOORS / СКРЫТЫЕ ДВЕРИ',
+      title:'Скрытые двери<br>без наличников —<br><span>в одной плоскости со стеной.</span>',
+      description:'Двери скрытого монтажа 42 и 59 мм. Подберём размер, открывание и отделку под интерьер и рассчитаем стоимость до подготовки проёма.',
+      primary:'Подобрать скрытую дверь',dialog:'calculate',model:'',
+      secondary:'Рассчитать стоимость',href:'#calculate',
+      note:'Скрытый монтаж · 42 и 59 мм · под разные варианты отделки',
+      caption:'Интерьерная визуализация'
+    },
+    {
+      eyebrow:'HIDDEN DOORS / МЕЖКОМНАТНЫЕ ДВЕРИ 36 ММ',
+      title:'Межкомнатная дверь,<br>короб и погонаж<br><span>в одном оформлении.</span>',
+      description:'Полотно, короб, наличники и доборы подбираются как единый комплект. Выберите размеры и покрытие под ваш интерьер.',
+      primary:'Рассчитать комплект',dialog:'calculate',model:'36',
+      secondary:'Посмотреть двери 36 мм',href:'doors/36/',
+      note:'Полотно · короб · наличники · доборы в едином оформлении',
+      caption:'Интерьерная визуализация'
+    },
+    {
+      eyebrow:'HIDDEN DOORS / ДИЛЕРАМ',
+      title:'Межкомнатные и скрытые<br>двери оптом —<br><span>напрямую от производителя.</span>',
+      description:'Для дверных салонов и партнёров: системы 36, 42 и 59 мм, производство в Тюмени, материалы и инструменты для подбора и расчёта заказов.',
+      primary:'Получить дилерские условия',dialog:'dealer',model:'',
+      secondary:'Условия сотрудничества',href:'dealers/',
+      note:'Для дверных салонов и профессиональных партнёров',
+      caption:'Hidden Doors · офис'
+    }
+  ];
+  const images=[...heroSlider.querySelectorAll('[data-hero-image]')];
+  const pages=[...heroSlider.querySelectorAll('[data-hero-go]')];
+  const eyebrow=heroSlider.querySelector('[data-hero-eyebrow]');
+  const title=heroSlider.querySelector('[data-hero-title]');
+  const description=heroSlider.querySelector('[data-hero-description]');
+  const primary=heroSlider.querySelector('[data-hero-primary]');
+  const secondary=heroSlider.querySelector('[data-hero-secondary]');
+  const note=heroSlider.querySelector('[data-hero-note]');
+  const captionNode=heroSlider.querySelector('[data-hero-caption]');
+  const prev=heroSlider.querySelector('[data-hero-prev]');
+  const next=heroSlider.querySelector('[data-hero-next]');
+  const interval=15000;
+  const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+  let current=0,timer=null,remaining=interval,startedAt=0,touchX=null;
+  const pauseReasons=new Set();
+  const stopTimer=()=>{
+    if(timer){
+      remaining=Math.max(0,remaining-(performance.now()-startedAt));
+      clearTimeout(timer);
+      timer=null;
+    }
+  };
+  const startTimer=()=>{
+    if(pauseReasons.size||reducedMotion.matches)return;
+    if(remaining<=0)remaining=interval;
+    startedAt=performance.now();
+    timer=setTimeout(()=>render(current+1,'auto'),remaining);
+  };
+  const syncPauseClass=()=>heroSlider.classList.toggle('is-paused',pauseReasons.size>0||reducedMotion.matches);
+  const setPause=(reason,on)=>{
+    if(on){
+      if(!pauseReasons.has(reason)){pauseReasons.add(reason);stopTimer()}
+    }else{
+      pauseReasons.delete(reason);
+      if(!pauseReasons.size){syncPauseClass();startTimer()}
+    }
+    syncPauseClass();
+  };
+  const render=(nextIndex,source='manual')=>{
+    stopTimer();
+    current=(nextIndex+heroSlides.length)%heroSlides.length;
+    remaining=interval;
+    const slide=heroSlides[current];
+    heroSlider.dataset.heroIndex=String(current);
+    images.forEach((img,i)=>img.classList.toggle('is-active',i===current));
+    pages.forEach((button,i)=>{
+      const active=i===current;
+      button.classList.toggle('is-active',active);
+      if(active)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');
+    });
+    eyebrow.textContent=slide.eyebrow;
+    title.innerHTML=slide.title;
+    description.textContent=slide.description;
+    primary.innerHTML=slide.primary+' <span aria-hidden="true">↗</span>';
+    primary.dataset.dialog=slide.dialog;
+    if(slide.model)primary.dataset.model=slide.model;else delete primary.dataset.model;
+    secondary.href=slide.href;
+    secondary.innerHTML=slide.secondary+' <span aria-hidden="true">→</span>';
+    note.textContent=slide.note;
+    captionNode.textContent=slide.caption;
+    if(source!=='auto')metricGoal('hero_slide_change',{slide:String(current+1),source,page_path:location.pathname});
+    startTimer();
+  };
+  pages.forEach(button=>button.addEventListener('click',()=>render(Number(button.dataset.heroGo),'number')));
+  prev.addEventListener('click',()=>render(current-1,'arrow'));
+  next.addEventListener('click',()=>render(current+1,'arrow'));
+  heroSlider.addEventListener('mouseenter',()=>setPause('hover',true));
+  heroSlider.addEventListener('mouseleave',()=>setPause('hover',false));
+  heroSlider.addEventListener('focusin',()=>setPause('focus',true));
+  heroSlider.addEventListener('focusout',()=>setTimeout(()=>setPause('focus',heroSlider.contains(document.activeElement)),0));
+  heroSlider.addEventListener('touchstart',e=>{touchX=e.changedTouches[0]?.clientX??null},{passive:true});
+  heroSlider.addEventListener('touchend',e=>{
+    if(touchX===null)return;
+    const endX=e.changedTouches[0]?.clientX??touchX;
+    const delta=endX-touchX;
+    touchX=null;
+    if(Math.abs(delta)>45)render(current+(delta<0?1:-1),'swipe');
+  },{passive:true});
+  document.addEventListener('visibilitychange',()=>setPause('hidden',document.hidden));
+  reducedMotion.addEventListener('change',()=>{syncPauseClass();if(reducedMotion.matches)stopTimer();else startTimer()});
+  syncPauseClass();
+  startTimer();
+}
+
+const parallaxImages=[...document.querySelectorAll('[data-parallax="hero"]')];
+if(parallaxImages.length){const reduced=matchMedia('(prefers-reduced-motion: reduce)'),desktop=matchMedia('(min-width: 901px)'),hero=parallaxImages[0].closest('.hero');let scheduled=false;const update=()=>{scheduled=false;if(reduced.matches||!desktop.matches){parallaxImages.forEach(img=>img.style.removeProperty('--parallax-y'));return}const r=hero.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;const amount=Math.max(-22,Math.min(22,-r.top*.055));parallaxImages.forEach(img=>img.style.setProperty('--parallax-y',amount+'px'))};const queue=()=>{if(!scheduled){scheduled=true;requestAnimationFrame(update)}};addEventListener('scroll',queue,{passive:true});addEventListener('resize',queue,{passive:true});reduced.addEventListener('change',queue);desktop.addEventListener('change',queue);queue()}
 const finishData=$('#finish-data');if(finishData){const finishes=JSON.parse(finishData.textContent);document.querySelectorAll('[data-finish]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-finish]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));const f=finishes[Number(b.dataset.finish)];$('#finish-content h3').textContent=f[1];$('#finish-content p').textContent=f[2]})}
 
 
