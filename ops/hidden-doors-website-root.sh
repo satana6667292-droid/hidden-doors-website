@@ -160,7 +160,7 @@ $PRODUCTION_HOST {
   header {
     X-Content-Type-Options nosniff
     Referrer-Policy strict-origin-when-cross-origin
-    X-Frame-Options SAMEORIGIN
+    Content-Security-Policy "frame-ancestors 'self' https://webvisor.com https://*.webvisor.com https://metrika.yandex.ru https://*.metrika.yandex.ru https://metrika.yandex.by https://*.metrika.yandex.by https://metrica.yandex.com https://*.metrica.yandex.com https://metrica.yandex.com.tr https://*.metrica.yandex.com.tr;"
     -Server
   }
 
