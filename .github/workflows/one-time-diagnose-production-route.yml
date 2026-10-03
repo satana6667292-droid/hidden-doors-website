@@ -1,4 +1,4 @@
-name: One-time diagnose production route
+name: One-time verify public production HTML
 
 on:
   push:
@@ -9,27 +9,18 @@ permissions:
   contents: read
 
 jobs:
-  diagnose:
+  verify:
     runs-on: [self-hosted, Linux, X64, hidden-doors-website]
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - name: Compare production and preview containers
+      - name: Inspect live HTML
         shell: bash
         run: |
           set -euo pipefail
-          echo "=== CONTAINERS ==="
-          sudo -n docker inspect hidden-doors-website --format 'PROD image={{.Image}} status={{.State.Status}} health={{if .State.Health}}{{.State.Health.Status}}{{end}}'
-          sudo -n docker inspect hidden-doors-website-preview --format 'PREVIEW image={{.Image}} status={{.State.Status}} health={{if .State.Health}}{{.State.Health.Status}}{{end}}'
-          echo
-          echo "=== PROD HTML HERO ==="
-          sudo -n docker exec hidden-doors-website sh -lc "grep -nE 'hero-slider|от производителя — под ваш интерьер|Стать дилером' /usr/share/nginx/html/index.html | head -20 || true"
-          echo
-          echo "=== PREVIEW HTML HERO ==="
-          sudo -n docker exec hidden-doors-website-preview sh -lc "grep -nE 'hero-slider|от производителя — под ваш интерьер|Стать дилером' /usr/share/nginx/html/index.html | head -20 || true"
-          echo
-          echo "=== LIVE PUBLIC HERO ==="
-          curl -fsS --max-time 20 https://hidden-doors.ru/ | grep -nE 'hero-slider|от производителя — под ваш интерьер|Стать дилером' | head -20 || true
-          echo
-          echo "=== CADDY RUNTIME ==="
-          PROXY=$(sudo -n docker ps --filter label=com.sudo -n docker.compose.service=reverse-proxy --format '{{.ID}}' | head -1)
-          sudo -n docker exec "$PROXY" sh -lc "cat /data/runtime/hidden-doors-website.caddy || true"
+          TMP=$(mktemp)
+          curl -fsS --max-time 20 -H 'Cache-Control: no-cache' "https://hidden-doors.ru/?check=$(date +%s)" -o "$TMP"
+          echo "=== HERO MARKERS ==="
+          grep -nE 'hero-slider|от производителя — под ваш интерьер|Стать дилером|Скрытые двери без наличников' "$TMP" | head -30 || true
+          echo "=== HTML SHA256 ==="
+          sha256sum "$TMP"
+          rm -f "$TMP"
