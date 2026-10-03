@@ -234,3 +234,36 @@ nav{align-items:center}
     justify-content:space-between;
   }
 }
+
+
+/* Approved first hero — exact wide banner geometry. */
+@media(min-width:1201px){
+  .hero-slider{
+    height:min(650px,33.8541667vw)!important;
+    min-height:0!important;
+  }
+}
+@media(min-width:901px){
+  .hero-slider .hero-backgrounds{inset:0!important}
+  .hero-slider .hero-image[data-parallax]{
+    top:0!important;
+    height:100%!important;
+    transform:none!important;
+    will-change:auto!important;
+  }
+  .hero-slider .hero-image-main{
+    width:100%!important;
+    height:100%!important;
+    object-fit:cover!important;
+    object-position:center center!important;
+    transform:none!important;
+  }
+  .hero-slider-controls{
+    background:transparent!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+    padding:0!important;
+    border-radius:0!important;
+    bottom:16px!important;
+  }
+}
