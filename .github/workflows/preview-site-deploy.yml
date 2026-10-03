@@ -38,7 +38,6 @@ jobs:
           cat site/assets/.dealer-hero-b64/part*.txt | tr -d '\n' | base64 -d > site/assets/dealers-office-consultation.avif
           test -s site/assets/dealers-office-consultation.avif
           echo "0962c0bff108c8b1ea23770441f1a77f438b2599017ca103adc4f260fd4bea4a  site/assets/dealers-office-consultation.avif" | sha256sum -c -
-          rm -rf site/assets/.dealer-hero-b64
 
       - name: Freeze generated catalog snapshot
         shell: bash
@@ -46,7 +45,7 @@ jobs:
           set -euo pipefail
           git config user.name "hidden-doors-preview"
           git config user.email "preview@hidden-doors.local"
-          git add -f site/catalog
+          git add -f site/catalog site/assets/dealers-office-consultation.avif
           if ! git diff --cached --quiet; then
             git commit -m "build: generated catalog snapshot"
           fi
