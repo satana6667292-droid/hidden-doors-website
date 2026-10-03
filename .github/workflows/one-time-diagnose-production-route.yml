@@ -18,18 +18,18 @@ jobs:
         run: |
           set -euo pipefail
           echo "=== CONTAINERS ==="
-          docker inspect hidden-doors-website --format 'PROD image={{.Image}} status={{.State.Status}} health={{if .State.Health}}{{.State.Health.Status}}{{end}}'
-          docker inspect hidden-doors-website-preview --format 'PREVIEW image={{.Image}} status={{.State.Status}} health={{if .State.Health}}{{.State.Health.Status}}{{end}}'
+          sudo -n docker inspect hidden-doors-website --format 'PROD image={{.Image}} status={{.State.Status}} health={{if .State.Health}}{{.State.Health.Status}}{{end}}'
+          sudo -n docker inspect hidden-doors-website-preview --format 'PREVIEW image={{.Image}} status={{.State.Status}} health={{if .State.Health}}{{.State.Health.Status}}{{end}}'
           echo
           echo "=== PROD HTML HERO ==="
-          docker exec hidden-doors-website sh -lc "grep -nE 'hero-slider|от производителя — под ваш интерьер|Стать дилером' /usr/share/nginx/html/index.html | head -20 || true"
+          sudo -n docker exec hidden-doors-website sh -lc "grep -nE 'hero-slider|от производителя — под ваш интерьер|Стать дилером' /usr/share/nginx/html/index.html | head -20 || true"
           echo
           echo "=== PREVIEW HTML HERO ==="
-          docker exec hidden-doors-website-preview sh -lc "grep -nE 'hero-slider|от производителя — под ваш интерьер|Стать дилером' /usr/share/nginx/html/index.html | head -20 || true"
+          sudo -n docker exec hidden-doors-website-preview sh -lc "grep -nE 'hero-slider|от производителя — под ваш интерьер|Стать дилером' /usr/share/nginx/html/index.html | head -20 || true"
           echo
           echo "=== LIVE PUBLIC HERO ==="
           curl -fsS --max-time 20 https://hidden-doors.ru/ | grep -nE 'hero-slider|от производителя — под ваш интерьер|Стать дилером' | head -20 || true
           echo
           echo "=== CADDY RUNTIME ==="
-          PROXY=$(docker ps --filter label=com.docker.compose.service=reverse-proxy --format '{{.ID}}' | head -1)
-          docker exec "$PROXY" sh -lc "cat /data/runtime/hidden-doors-website.caddy || true"
+          PROXY=$(sudo -n docker ps --filter label=com.sudo -n docker.compose.service=reverse-proxy --format '{{.ID}}' | head -1)
+          sudo -n docker exec "$PROXY" sh -lc "cat /data/runtime/hidden-doors-website.caddy || true"
