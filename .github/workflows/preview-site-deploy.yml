@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: hidden-doors-website-preview
@@ -25,43 +25,11 @@ jobs:
           ref: preview-site
           fetch-depth: 1
 
-      - name: Import full-resolution dealer hero once
-        shell: bash
-        env:
-          DEALER_HERO_URL: "https://at.adobe.com/oRVn1PnkWssZkfsP"
-        run: |
-          set -euo pipefail
-          target="site/assets/dealers-office-consultation-v2.png"
-          if [[ -s "$target" ]]; then
-            echo "Full-resolution dealer hero already exists."
-          else
-            curl --fail --location --retry 3 --retry-delay 2 "$DEALER_HERO_URL" -o "$target"
-            bytes="$(stat -c%s "$target")"
-            echo "Dealer hero bytes: $bytes"
-            [[ "$bytes" -gt 500000 ]] || {
-              echo "Downloaded dealer hero is unexpectedly small."
-              exit 1
-            }
-            git config user.name "hidden-doors-preview"
-            git config user.email "preview@hidden-doors.local"
-            git add -f "$target"
-            git commit -m "assets: add full-resolution dealer hero"
-            git push origin HEAD:preview-site
-          fi
-
       - name: Build catalog under /catalog
         shell: bash
         run: |
           set -euo pipefail
           bash ops/build-catalog.sh
-
-      - name: Assemble dealer hero asset
-        shell: bash
-        run: |
-          set -euo pipefail
-          cat site/assets/.dealer-hero-b64/part*.txt | tr -d '\n' | base64 -d > site/assets/dealers-office-consultation.avif
-          test -s site/assets/dealers-office-consultation.avif
-          echo "0962c0bff108c8b1ea23770441f1a77f438b2599017ca103adc4f260fd4bea4a  site/assets/dealers-office-consultation.avif" | sha256sum -c -
 
       - name: Freeze generated catalog snapshot
         shell: bash
@@ -69,7 +37,7 @@ jobs:
           set -euo pipefail
           git config user.name "hidden-doors-preview"
           git config user.email "preview@hidden-doors.local"
-          git add -f site/catalog site/assets/dealers-office-consultation.avif
+          git add -f site/catalog
           if ! git diff --cached --quiet; then
             git commit -m "build: generated catalog snapshot"
           fi
@@ -84,6 +52,7 @@ jobs:
           test -s site/404.html
           test -s site/catalog/index.html
           test -d site/catalog/assets/pages
+          test -s site/assets/dealers-office-consultation-v2.png
           bash -n ops/hidden-doors-website-root.sh
 
       - name: Deploy isolated VPN preview
