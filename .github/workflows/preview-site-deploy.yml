@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: hidden-doors-website-preview
@@ -24,6 +24,30 @@ jobs:
         with:
           ref: preview-site
           fetch-depth: 1
+
+      - name: Import full-resolution dealer hero once
+        shell: bash
+        env:
+          DEALER_HERO_URL: "https://at.adobe.com/oRVn1PnkWssZkfsP"
+        run: |
+          set -euo pipefail
+          target="site/assets/dealers-office-consultation-v2.png"
+          if [[ -s "$target" ]]; then
+            echo "Full-resolution dealer hero already exists."
+          else
+            curl --fail --location --retry 3 --retry-delay 2 "$DEALER_HERO_URL" -o "$target"
+            bytes="$(stat -c%s "$target")"
+            echo "Dealer hero bytes: $bytes"
+            [[ "$bytes" -gt 500000 ]] || {
+              echo "Downloaded dealer hero is unexpectedly small."
+              exit 1
+            }
+            git config user.name "hidden-doors-preview"
+            git config user.email "preview@hidden-doors.local"
+            git add -f "$target"
+            git commit -m "assets: add full-resolution dealer hero"
+            git push origin HEAD:preview-site
+          fi
 
       - name: Build catalog under /catalog
         shell: bash
