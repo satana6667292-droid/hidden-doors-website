@@ -253,6 +253,37 @@ if(heroSlider){
   ];
   const images=[...heroSlider.querySelectorAll('[data-hero-image]')];
   const pages=[...heroSlider.querySelectorAll('[data-hero-go]')];
+  const heroImageLoads=new Map();
+  const ensureHeroImage=index=>{
+    const img=images[index];
+    if(!img)return Promise.resolve();
+    if(img.currentSrc||img.getAttribute('src')){
+      if(img.complete&&img.naturalWidth)return Promise.resolve();
+      if(heroImageLoads.has(index))return heroImageLoads.get(index);
+    }
+    const src=img.dataset.src;
+    if(!src)return Promise.resolve();
+    const promise=new Promise(resolve=>{
+      const done=()=>{img.dataset.loaded='true';resolve()};
+      img.addEventListener('load',done,{once:true});
+      img.addEventListener('error',done,{once:true});
+      if('fetchPriority' in img)img.fetchPriority='low';
+      img.src=src;
+      delete img.dataset.src;
+      if(img.complete)done();
+    });
+    heroImageLoads.set(index,promise);
+    return promise;
+  };
+  const warmHeroImages=()=>{
+    ensureHeroImage(1);
+    const idle=window.requestIdleCallback||((cb)=>setTimeout(cb,800));
+    idle(()=>ensureHeroImage(2),{timeout:2500});
+    setTimeout(()=>ensureHeroImage(3),6500);
+  };
+  const firstHeroImage=images[0];
+  if(firstHeroImage?.complete&&firstHeroImage.naturalWidth)warmHeroImages();
+  else firstHeroImage?.addEventListener('load',warmHeroImages,{once:true});
   const eyebrow=heroSlider.querySelector('[data-hero-eyebrow]');
   const title=heroSlider.querySelector('[data-hero-title]');
   const description=heroSlider.querySelector('[data-hero-description]');
@@ -289,9 +320,11 @@ if(heroSlider){
     }
     syncPauseClass();
   };
-  const render=(nextIndex,source='manual')=>{
+  const render=async(nextIndex,source='manual')=>{
     stopTimer();
-    current=(nextIndex+heroSlides.length)%heroSlides.length;
+    const target=(nextIndex+heroSlides.length)%heroSlides.length;
+    await ensureHeroImage(target);
+    current=target;
     remaining=interval;
     const slide=heroSlides[current];
     heroSlider.dataset.heroIndex=String(current);
