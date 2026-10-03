@@ -184,3 +184,24 @@ nav{align-items:center}
   .hero-slider .hero-image{transition:none}
   .hero-page[aria-current="true"] i::after{animation:none;transform:scaleX(1)}
 }
+
+
+/* Temporary approved first hero: static until the first frame is visually signed off. */
+.hero-static{height:650px;min-height:650px;background:#1b1e1b}
+.hero-static .hero-static-media{position:absolute;inset:0;z-index:-2;overflow:hidden;background:linear-gradient(90deg,#171a18 0%,#20231f 48%,#1b1e1b 100%)}
+.hero-static .hero-static-image{position:absolute;top:0;right:0;bottom:0;left:auto;width:auto;height:100%;max-width:none;object-fit:contain;object-position:right center;transform:none!important;will-change:auto}
+.hero-static .hero-shade{z-index:-1;background:linear-gradient(90deg,rgba(17,21,18,.92) 0%,rgba(17,21,18,.82) 32%,rgba(17,21,18,.42) 55%,rgba(17,21,18,.08) 78%,rgba(17,21,18,0) 100%)}
+.hero-static .hero-content{position:relative;z-index:2}
+.hero-static h1{font-size:clamp(37px,3.9vw,62px);max-width:980px}
+.hero-static p{max-width:650px}
+@media(max-width:900px){
+  .hero-static{height:650px;min-height:650px}
+  .hero-static .hero-static-image{right:-6%;height:100%}
+  .hero-static .hero-shade{background:linear-gradient(90deg,rgba(17,21,18,.93),rgba(17,21,18,.67) 60%,rgba(17,21,18,.22))}
+}
+@media(max-width:600px){
+  .hero-static{height:700px;min-height:700px}
+  .hero-static .hero-static-image{inset:0;width:100%;height:100%;object-fit:cover;object-position:60% center}
+  .hero-static .hero-shade{background:linear-gradient(90deg,rgba(17,21,18,.88),rgba(17,21,18,.56)),linear-gradient(0deg,rgba(17,21,18,.55),transparent 40%)}
+  .hero-static h1{font-size:clamp(34px,9vw,46px);line-height:1.13}
+}
