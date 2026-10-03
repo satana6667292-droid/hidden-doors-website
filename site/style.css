@@ -267,3 +267,22 @@ nav{align-items:center}
     bottom:16px!important;
   }
 }
+
+
+/* Second hero: same exact image treatment as approved first slide. */
+.hero-slider .hero-image-hidden{
+  z-index:1;
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center center!important;
+  transform:none!important;
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+}
+@media(max-width:600px){
+  .hero-slider .hero-image-hidden{
+    object-fit:cover!important;
+    object-position:center center!important;
+  }
+}
