@@ -3,8 +3,23 @@ const LEAD_API_URL='https://lk.hidden-doors.ru/api/site/lead';
 const TELEGRAM_URL='https://t.me/Door_Dealer';
 const PRIVACY_POLICY_VERSION='2026-09-29';
 const SITE_ROOT_URL=new URL('.',document.currentScript?.src||location.href);
-(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(let j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r)return}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id='+METRIKA_ID,'ym');
+window.ym=window.ym||function(){(window.ym.a=window.ym.a||[]).push(arguments)};
+window.ym.l=1*new Date();
 ym(METRIKA_ID,'init',{ssr:true,webvisor:true,clickmap:true,accurateTrackBounce:true,trackLinks:true});
+const loadMetrika=()=>{
+  if(document.querySelector('script[data-yandex-metrika]'))return;
+  const script=document.createElement('script');
+  script.async=true;
+  script.dataset.yandexMetrika='true';
+  script.src='https://mc.yandex.ru/metrika/tag.js?id='+METRIKA_ID;
+  document.head.appendChild(script);
+};
+const scheduleMetrika=()=>{
+  if('requestIdleCallback' in window)requestIdleCallback(loadMetrika,{timeout:2500});
+  else setTimeout(loadMetrika,1200);
+};
+if(document.readyState==='complete')scheduleMetrika();
+else addEventListener('load',scheduleMetrika,{once:true});
 function metricGoal(name,params={}){if(typeof window.ym==='function')window.ym(METRIKA_ID,'reachGoal',name,params)}
 function telegramLink(className,label){
   const a=document.createElement('a');
@@ -277,9 +292,8 @@ if(heroSlider){
   };
   const warmHeroImages=()=>{
     ensureHeroImage(1);
-    const idle=window.requestIdleCallback||((cb)=>setTimeout(cb,800));
-    idle(()=>ensureHeroImage(2),{timeout:2500});
-    setTimeout(()=>ensureHeroImage(3),6500);
+    setTimeout(()=>ensureHeroImage(2),8000);
+    setTimeout(()=>ensureHeroImage(3),25000);
   };
   const firstHeroImage=images[0];
   if(firstHeroImage?.complete&&firstHeroImage.naturalWidth)warmHeroImages();
@@ -320,10 +334,13 @@ if(heroSlider){
     }
     syncPauseClass();
   };
+  let renderRequest=0;
   const render=async(nextIndex,source='manual')=>{
+    const request=++renderRequest;
     stopTimer();
     const target=(nextIndex+heroSlides.length)%heroSlides.length;
     await ensureHeroImage(target);
+    if(request!==renderRequest)return;
     current=target;
     remaining=interval;
     const slide=heroSlides[current];
