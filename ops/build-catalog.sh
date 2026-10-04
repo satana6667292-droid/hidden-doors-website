@@ -28,6 +28,10 @@ for n in 002 003 004 005 028 032; do
   cp "$tmp/page-${n}.webp" "$tmp/catalog-site/assets/thumbs/page-${n}.webp"
 done
 
+# Bake the LOGO MASTER pilot using the existing ARC page 19 logo as the exact reference.
+python3 "$tmp/catalog/scripts/bake_logo_master.py" \
+  --site "$tmp/catalog-site"
+
 # Bake the approved FOLIO MASTER v1 directly into generated raster assets.
 # This removes all historical embedded numbers first, then writes exactly one final folio.
 FOLIO_PYTHON=python3
@@ -45,8 +49,7 @@ if ! python3 -c "import PIL" >/dev/null 2>&1; then
 fi
 "$FOLIO_PYTHON" "$tmp/catalog/scripts/bake_folio_master.py" \
   --site "$tmp/catalog-site" \
-  --font "$WORKTREE_ROOT/site/assets/manrope-600.ttf" \
-  --logo "$WORKTREE_ROOT/site/assets/logo.png"
+  --font "$WORKTREE_ROOT/site/assets/manrope-600.ttf"
 
 # The original catalog app is internal editor only.
 cp "$tmp/catalog-site/index.html" "$tmp/catalog-site/editor.html"
