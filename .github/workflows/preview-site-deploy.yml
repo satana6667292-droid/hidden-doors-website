@@ -30,7 +30,7 @@ jobs:
         run: |
           set -euo pipefail
           CATALOG_REF=design/logo-master-s-test-2026-10-04 bash ops/build-catalog.sh
-          # catalog rollout commit: 1bac2aca47e9b22928e19c17e0a477a7d1fe1b23
+          # catalog clean-logo commit: 801c91362f7e58c59d5b607624cbeb7795da5117
 
       - name: Freeze generated catalog snapshot
         shell: bash
