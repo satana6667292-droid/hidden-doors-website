@@ -1,5 +1,52 @@
 const METRIKA_ID=95250042;
 const LEAD_API_URL='https://lk.hidden-doors.ru/api/site/lead';
+const ATTRIBUTION_STORAGE_KEY='hd_marketing_attribution_v1';
+const ATTRIBUTION_TTL_MS=90*24*60*60*1000;
+
+function readStoredAttribution(){
+  try{
+    const data=JSON.parse(localStorage.getItem(ATTRIBUTION_STORAGE_KEY)||'{}');
+    const capturedAt=Date.parse(data.captured_at||'');
+    if(!capturedAt||Date.now()-capturedAt>ATTRIBUTION_TTL_MS){
+      localStorage.removeItem(ATTRIBUTION_STORAGE_KEY);
+      return {};
+    }
+    return data;
+  }catch{return {}}
+}
+function captureAttribution(){
+  const q=new URLSearchParams(location.search);
+  const incoming={
+    utm_source:q.get('utm_source')||'',
+    utm_medium:q.get('utm_medium')||'',
+    utm_campaign:q.get('utm_campaign')||'',
+    utm_content:q.get('utm_content')||'',
+    utm_term:q.get('utm_term')||'',
+    yclid:q.get('yclid')||''
+  };
+  const hasIncoming=Object.values(incoming).some(Boolean);
+  if(!hasIncoming)return readStoredAttribution();
+  const data={
+    ...incoming,
+    landing_page:location.href,
+    landing_referrer:document.referrer||'',
+    captured_at:new Date().toISOString()
+  };
+  try{localStorage.setItem(ATTRIBUTION_STORAGE_KEY,JSON.stringify(data))}catch{}
+  return data;
+}
+const MARKETING_ATTRIBUTION=captureAttribution();
+function getMetrikaClientId(timeoutMs=1200){
+  return new Promise(resolve=>{
+    let done=false;
+    const finish=value=>{if(done)return;done=true;resolve(String(value||''))};
+    const timer=setTimeout(()=>finish(''),timeoutMs);
+    try{
+      if(typeof window.ym!=='function'){clearTimeout(timer);finish('');return}
+      window.ym(METRIKA_ID,'getClientID',clientId=>{clearTimeout(timer);finish(clientId)});
+    }catch{clearTimeout(timer);finish('')}
+  });
+}
 const TELEGRAM_URL='https://t.me/Door_Dealer';
 const PRIVACY_POLICY_VERSION='2026-09-29';
 const SITE_ROOT_URL=new URL('.',document.currentScript?.src||location.href);
@@ -154,7 +201,36 @@ function configurePhoneInput(phone){
   phone.placeholder='+7 (___) ___-__-__';
   phone.value='+7';
 }
-function tracking(kind,model){const q=new URLSearchParams(location.search);const values={page_url:location.href,page_title:document.title,form_type:kind,door_system:model||document.body.dataset.product||'',model:model||'',referrer:document.referrer,utm_source:q.get('utm_source')||'',utm_medium:q.get('utm_medium')||'',utm_campaign:q.get('utm_campaign')||'',utm_content:q.get('utm_content')||'',utm_term:q.get('utm_term')||''};Object.entries(values).forEach(([k,v])=>ensureHidden(k).value=v)}
+function tracking(kind,model){
+  const q=new URLSearchParams(location.search);
+  const live={
+    utm_source:q.get('utm_source')||'',
+    utm_medium:q.get('utm_medium')||'',
+    utm_campaign:q.get('utm_campaign')||'',
+    utm_content:q.get('utm_content')||'',
+    utm_term:q.get('utm_term')||'',
+    yclid:q.get('yclid')||''
+  };
+  const source=Object.values(live).some(Boolean)?{...MARKETING_ATTRIBUTION,...live}:MARKETING_ATTRIBUTION;
+  const values={
+    page_url:location.href,
+    page_title:document.title,
+    form_type:kind,
+    door_system:model||document.body.dataset.product||'',
+    model:model||'',
+    referrer:document.referrer,
+    utm_source:source.utm_source||'',
+    utm_medium:source.utm_medium||'',
+    utm_campaign:source.utm_campaign||'',
+    utm_content:source.utm_content||'',
+    utm_term:source.utm_term||'',
+    yclid:source.yclid||'',
+    landing_page:source.landing_page||'',
+    landing_referrer:source.landing_referrer||'',
+    attribution_captured_at:source.captured_at||''
+  };
+  Object.entries(values).forEach(([k,v])=>ensureHidden(k).value=v)
+}
 function request(rawKind='calculate',model){const kind=normalizeKind(rawKind),cfg=copy[kind]||copy.calculate;
 form.reset();ensurePrivacyConsent();$('.form-status').textContent='';$('#dialog-title').textContent=cfg.title;$('#dialog-description').textContent=cfg.description;
 const note=requestDialog.querySelector('.prototype-note');if(note)note.hidden=true;
@@ -189,6 +265,8 @@ ensurePrivacyConsent();
 form.onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,name=f.elements.name,phone=f.elements.phone,submit=f.querySelector('[type="submit"]'),status=$('.form-status');
 name.value=name.value.trim();if(!name.value){name.setCustomValidity('Укажите имя.');name.reportValidity();return}name.setCustomValidity('');
 const subscriberDigits=subscriberPhoneDigits(phone.value);if(subscriberDigits.length!==10){phone.setCustomValidity('Введите ровно 10 цифр после +7.');phone.reportValidity();return}phone.setCustomValidity('');phone.value=formatRuPhone(phone.value);
+const metrikaClientId=await getMetrikaClientId();
+ensureHidden('metrika_client_id').value=metrikaClientId;
 const data=new FormData(f),payload={};for(const [key,value] of data.entries()){if(value instanceof File)continue;payload[key]=value}
 window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'lead_ready',form_type:f.dataset.formType,door_system:payload.door_system||'',page_path:location.pathname});
 const original=submit.innerHTML;submit.disabled=true;submit.textContent='Отправляем…';status.textContent='';
