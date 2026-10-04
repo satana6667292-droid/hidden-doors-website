@@ -29,7 +29,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          CATALOG_REF=fix/folio-audit-2026-10-04 bash ops/build-catalog.sh
+          CATALOG_REF=design/logo-master-s-test-2026-10-04 bash ops/build-catalog.sh
 
       - name: Freeze generated catalog snapshot
         shell: bash
