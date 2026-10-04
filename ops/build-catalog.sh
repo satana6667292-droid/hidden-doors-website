@@ -45,7 +45,8 @@ if ! python3 -c "import PIL" >/dev/null 2>&1; then
 fi
 "$FOLIO_PYTHON" "$tmp/catalog/scripts/bake_folio_master.py" \
   --site "$tmp/catalog-site" \
-  --font "$WORKTREE_ROOT/site/assets/manrope-600.ttf"
+  --font "$WORKTREE_ROOT/site/assets/manrope-600.ttf" \
+  --logo "$WORKTREE_ROOT/site/assets/logo.png"
 
 # The original catalog app is internal editor only.
 cp "$tmp/catalog-site/index.html" "$tmp/catalog-site/editor.html"
