@@ -30,6 +30,7 @@ jobs:
         run: |
           set -euo pipefail
           CATALOG_REF=design/logo-master-s-test-2026-10-04 bash ops/build-catalog.sh
+          # catalog pilot commit: 2ce5a804c44a24d03efdbc8a6eb83f31445ff75f
 
       - name: Freeze generated catalog snapshot
         shell: bash
