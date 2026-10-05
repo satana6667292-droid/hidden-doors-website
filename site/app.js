@@ -36,10 +36,12 @@ function captureAttribution(){
   return data;
 }
 const MARKETING_ATTRIBUTION=captureAttribution();
+let METRIKA_CLIENT_ID_CACHE='';
 function getMetrikaClientId(timeoutMs=5000){
+  if(METRIKA_CLIENT_ID_CACHE)return Promise.resolve(METRIKA_CLIENT_ID_CACHE);
   return new Promise(resolve=>{
     let done=false;
-    const finish=value=>{if(done)return;done=true;resolve(String(value||''))};
+    const finish=value=>{if(done)return;done=true;METRIKA_CLIENT_ID_CACHE=String(value||METRIKA_CLIENT_ID_CACHE||'');resolve(METRIKA_CLIENT_ID_CACHE)};
     const timer=setTimeout(()=>finish(''),timeoutMs);
     try{
       if(typeof window.ym!=='function'){clearTimeout(timer);finish('');return}
@@ -52,6 +54,7 @@ const PRIVACY_POLICY_VERSION='2026-09-29';
 const SITE_ROOT_URL=new URL('.',document.currentScript?.src||location.href);
 (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(let j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r)return}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id='+METRIKA_ID,'ym');
 ym(METRIKA_ID,'init',{ssr:true,webvisor:true,clickmap:true,accurateTrackBounce:true,trackLinks:true});
+setTimeout(()=>getMetrikaClientId(10000),500);
 function metricGoal(name,params={}){if(typeof window.ym==='function')window.ym(METRIKA_ID,'reachGoal',name,params)}
 function telegramLink(className,label){
   const a=document.createElement('a');
