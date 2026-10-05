@@ -270,7 +270,7 @@ name.value=name.value.trim();if(!name.value){name.setCustomValidity('Укажи�
 const subscriberDigits=subscriberPhoneDigits(phone.value);if(subscriberDigits.length!==10){phone.setCustomValidity('Введите ровно 10 цифр после +7.');phone.reportValidity();return}phone.setCustomValidity('');phone.value=formatRuPhone(phone.value);
 const metrikaClientId=await getMetrikaClientId();
 ensureHidden('metrika_client_id').value=metrikaClientId;
-const data=new FormData(f),payload={};for(const [key,value] of data.entries()){if(value instanceof File)continue;payload[key]=value}
+const data=new FormData(f),payload={};for(const [key,value] of data.entries()){if(value instanceof File)continue;payload[key]=value}payload.metrika_client_id=metrikaClientId;
 window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'lead_ready',form_type:f.dataset.formType,door_system:payload.door_system||'',page_path:location.pathname});
 const original=submit.innerHTML;submit.disabled=true;submit.textContent='Отправляем…';status.textContent='';
 try{
