@@ -36,7 +36,7 @@ function captureAttribution(){
   return data;
 }
 const MARKETING_ATTRIBUTION=captureAttribution();
-function getMetrikaClientId(timeoutMs=1200){
+function getMetrikaClientId(timeoutMs=5000){
   return new Promise(resolve=>{
     let done=false;
     const finish=value=>{if(done)return;done=true;resolve(String(value||''))};
