@@ -238,9 +238,12 @@ nav{align-items:center}
 
 /* Approved first hero — exact wide banner geometry. */
 @media(min-width:1201px){
+  /* Keep the desktop hero tall enough for CTA + slider navigation on
+     1280/1366/1440px screens. The previous pure 16:5-ish scaling could
+     collapse the hero to ~430-490px and make controls overlap the CTA. */
   .hero-slider{
-    height:min(650px,33.8541667vw)!important;
-    min-height:0!important;
+    height:clamp(560px,33.8541667vw,650px)!important;
+    min-height:560px!important;
   }
 }
 @media(min-width:901px){
